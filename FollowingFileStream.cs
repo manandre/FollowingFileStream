@@ -1,54 +1,95 @@
+using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace FollowingFileStream
 {
-    public class FollowingFileStream : FileStream
+    public class FollowingFileStream : Stream
     {
+        private FileStream fileStream;
         private const int MillisecondsRetryTimeout = 100;
+        private CancellationTokenSource cts = new CancellationTokenSource();
+        private readonly AsyncLock locker = new AsyncLock();
 
         #region Constructors
-        public FollowingFileStream(string path, FileMode mode) : base(path, mode)
+        public FollowingFileStream(string path, FileMode mode)
         {
+            fileStream = new FileStream(path, mode);
         }
 
-
-        public FollowingFileStream(string path, FileMode mode, FileAccess access) : base(path, mode, access)
+        public FollowingFileStream(string path, FileMode mode, FileAccess access)
         {
+            fileStream = new FileStream(path, mode, access);
         }
 
-        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share) : base(path, mode, access, share)
+        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share)
         {
+            fileStream = new FileStream(path, mode, access, share);
         }
 
-        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize) : base(path, mode, access, share, bufferSize)
+        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize)
         {
+            fileStream = new FileStream(path, mode, access, share, bufferSize);
         }
 
-        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize, bool useAsync) : base(path, mode, access, share, bufferSize, useAsync)
+        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize, bool useAsync)
         {
+             fileStream = new FileStream(path, mode, access, share, bufferSize, useAsync);
         }
 
-        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize, FileOptions options) : base(path, mode, access, share, bufferSize, options)
+        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize, FileOptions options)
         {
+             fileStream = new FileStream(path, mode, access, share, bufferSize, options);
         }
         #endregion
         public override bool CanWrite => false;
 
+        public override bool CanRead => fileStream.CanRead;
+
+        public override bool CanSeek => fileStream.CanSeek;
+
+        public override bool CanTimeout => fileStream.CanTimeout;
+
+        public override long Length => fileStream.Length;
+
+        public override long Position { get => fileStream.Position; set => fileStream.Position = value;}
+
         public override int Read(byte[] array, int offset, int count)
         {
+            return ReadAsync(array, offset,count, CancellationToken.None).Result;
+        }
+
+        public override async Task<int> ReadAsync(byte[] array, int offset, int count, CancellationToken cancellationToken)
+        {
             int read = 0;
-            do {
-                read = base.Read(array, offset, count);
-            } while (read == 0 && RetryNeeded());
+            using(await locker.LockAsync())
+            {
+                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
+                do {
+                    try{
+                        read = await fileStream.ReadAsync(array, offset, count, linkedCts.Token);
+                    }
+                    catch (OperationCanceledException) {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                } while (read == 0 && await RetryNeededAsync());
+            }
             return read;
         }
 
-        private bool RetryNeeded()
+        private async Task<bool> RetryNeededAsync()
         {
             bool retry = IsFileLockedForWriting();
             if (retry) {
-                Thread.Sleep(MillisecondsRetryTimeout);
+                try
+                {
+                    await Task.Delay(MillisecondsRetryTimeout, cts.Token).ConfigureAwait(false);
+                }
+                catch(TaskCanceledException)
+                {
+                    retry = false;
+                }
             }
             return retry;
         }
@@ -59,7 +100,7 @@ namespace FollowingFileStream
 
             try
             {
-                stream = new FileStream(base.Name, FileMode.Open, FileAccess.Write, FileShare.Read);
+                stream = new FileStream(fileStream.Name, FileMode.Open, FileAccess.Write, FileShare.Read);
             }
             catch (IOException)
             {
@@ -77,6 +118,76 @@ namespace FollowingFileStream
 
             //file is not locked
             return false;
+        }
+
+        bool disposed = false;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposed)
+                return; 
+            
+            if (disposing) {
+                cts.Cancel();
+                using(locker.Lock())
+                {
+                    fileStream?.Dispose();
+                }
+                cts.Dispose();
+                // Free any other managed objects here.
+                //
+            }
+            
+            // Free any unmanaged objects here.
+            //
+
+            disposed = true;
+            // Call fileStream class implementation.
+            base.Dispose(disposing);
+        }
+
+        public override void Flush()
+        {
+            throw new NotSupportedException();
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            using(locker.Lock())
+            {
+                return fileStream.Seek(offset, origin);
+            }
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    public class AsyncLock : IDisposable
+    {
+        private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
+ 
+        public async Task<AsyncLock> LockAsync()
+        {
+            await _semaphoreSlim.WaitAsync();
+            return this;
+        }
+ 
+        public AsyncLock Lock()
+        {
+            return LockAsync().GetAwaiter().GetResult();
+        }
+
+        public void Dispose()
+        {
+            _semaphoreSlim.Release();
         }
     }
 }
