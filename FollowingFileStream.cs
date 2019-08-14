@@ -57,7 +57,7 @@ namespace FollowingFileStream
 
         public override int Read(byte[] array, int offset, int count)
         {
-            return ReadAsync(array, offset,count, CancellationToken.None).Result;
+            return ReadAsync(array, offset,count, CancellationToken.None).GetAwaiter().GetResult();
         }
 
         public override async Task<int> ReadAsync(byte[] array, int offset, int count, CancellationToken cancellationToken)
@@ -168,6 +168,16 @@ namespace FollowingFileStream
         {
             throw new NotSupportedException();
         }
+
+        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        {
+            return ReadAsync(buffer, offset, count, CancellationToken.None).AsApm(callback, state);
+        }
+
+        public override int EndRead(IAsyncResult asyncResult)
+        {
+            return ((Task<int>)asyncResult).Result;
+        }
     }
 
     public class AsyncLock : IDisposable
@@ -188,6 +198,32 @@ namespace FollowingFileStream
         public void Dispose()
         {
             _semaphoreSlim.Release();
+        }
+    }
+
+    public static class AsyncExtensions
+    {
+        public static IAsyncResult AsApm<T>(this Task<T> task, 
+                                            AsyncCallback callback, 
+                                            object state)
+        {
+            if (task == null) 
+                throw new ArgumentNullException("task");
+            
+            var tcs = new TaskCompletionSource<T>(state);
+            task.ContinueWith(t => 
+                            {
+                                if (t.IsFaulted) 
+                                    tcs.TrySetException(t.Exception.InnerExceptions);
+                                else if (t.IsCanceled)    
+                                    tcs.TrySetCanceled();
+                                else 
+                                    tcs.TrySetResult(t.Result);
+
+                                if (callback != null) 
+                                    callback(tcs.Task);
+                            }, TaskScheduler.Default);
+            return tcs.Task;
         }
     }
 }
