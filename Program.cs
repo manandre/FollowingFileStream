@@ -21,8 +21,9 @@ namespace FollowingFileStream
         {
             using (var source = new FileStream(InputPath, FileMode.Create, FileAccess.Write, FileShare.Read))
             using (var sw = new StreamWriter(source))
+            using (var sr = new StreamReader(Console.OpenStandardInput()))
             {
-                await Console.In.CopyToAsync(sw, stopOn:"quit");
+                await sr.CopyToAsync(sw, stopOn:"quit");
             }
         }
         private static async Task CopyToOutput()
