@@ -1,8 +1,9 @@
-using Manandre.Threading;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Nito.AsyncEx;
+using Nito.AsyncEx.Interop;
 
 namespace Manandre.IO
 {
@@ -51,7 +52,11 @@ namespace Manandre.IO
         /// </exception>
         public sealed override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
-            return ReadAsync(buffer, offset, count, CancellationToken.None).AsApm(callback, state);
+            return ApmAsyncFactory.ToBegin(
+                ReadAsync(buffer, offset, count, CancellationToken.None),
+                callback,
+                state
+            );
         }
 
         /// <summary>
@@ -85,7 +90,11 @@ namespace Manandre.IO
         /// </exception>
         public sealed override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
-            return WriteAsync(buffer, offset, count, CancellationToken.None).AsApm(callback, state);
+            return ApmAsyncFactory.ToBegin(
+                WriteAsync(buffer, offset, count, CancellationToken.None),
+                callback,
+                state
+            );
         }
 
         /// <summary>
@@ -114,7 +123,7 @@ namespace Manandre.IO
         /// </exception>
         public sealed override int EndRead(IAsyncResult asyncResult)
         {
-            return ((Task<int>)asyncResult).GetAwaiter().GetResult();
+            return ApmAsyncFactory.ToEnd<int>(asyncResult);
         }
 
         /// <summary>
@@ -138,7 +147,7 @@ namespace Manandre.IO
         /// </exception>
         public sealed override void EndWrite(IAsyncResult asyncResult)
         {
-            ((Task)asyncResult).GetAwaiter().GetResult();
+            ApmAsyncFactory.ToEnd(asyncResult);
         }
 
         /// <summary>
