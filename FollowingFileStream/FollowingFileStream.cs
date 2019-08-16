@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Nito.AsyncEx;
 using Nito.AsyncEx.Interop;
+using Nito.AsyncEx.Synchronous;
 
 namespace FollowingFileStream
 {
@@ -40,7 +41,7 @@ namespace FollowingFileStream
 
         public override int Read(byte[] array, int offset, int count)
         {
-            return ReadAsync(array, offset,count, CancellationToken.None).GetAwaiter().GetResult();
+            return ReadAsync(array, offset,count, CancellationToken.None).WaitAndUnwrapException();
         }
 
         public override async Task<int> ReadAsync(byte[] array, int offset, int count, CancellationToken cancellationToken)
