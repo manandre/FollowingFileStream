@@ -10,5 +10,7 @@
     <LangVersion>7.1</LangVersion>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-
+  <ItemGroup>
+    <PackageReference Include="Nito.AsyncEx" Version="5.0.0"/>
+  </ItemGroup>
 </Project>
