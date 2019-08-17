@@ -28,7 +28,7 @@ namespace FollowingFileStream
         }
         private static async Task CopyToOutput()
         {
-            using (var source = new FollowingFileStream(InputPath, FileMode.Open, FileAccess.Read, FileShare.Write))
+            using (var source = new FollowingFileStream(InputPath))
             using (var destination = new FileStream(OutputPath, FileMode.Create, FileAccess.Write, FileShare.Read))
             {
                 await source.CopyToAsync(destination);

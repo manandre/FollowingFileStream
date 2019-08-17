@@ -13,35 +13,16 @@ namespace FollowingFileStream
         private readonly AsyncLock locker = new AsyncLock();
 
         #region Constructors
-        public FollowingFileStream(string path, FileMode mode)
+        public FollowingFileStream(string path)
         {
-            fileStream = new FileStream(path, mode);
+            fileStream = new FileStream(path, FileMode.Open,FileAccess.Read, FileShare.ReadWrite);
         }
 
-        public FollowingFileStream(string path, FileMode mode, FileAccess access)
+        public FollowingFileStream(string path, int bufferSize, bool useAsync)
         {
-            fileStream = new FileStream(path, mode, access);
+             fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, useAsync);
         }
 
-        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share)
-        {
-            fileStream = new FileStream(path, mode, access, share);
-        }
-
-        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize)
-        {
-            fileStream = new FileStream(path, mode, access, share, bufferSize);
-        }
-
-        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize, bool useAsync)
-        {
-             fileStream = new FileStream(path, mode, access, share, bufferSize, useAsync);
-        }
-
-        public FollowingFileStream(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize, FileOptions options)
-        {
-             fileStream = new FileStream(path, mode, access, share, bufferSize, options);
-        }
         #endregion
         public override bool CanWrite => false;
 
