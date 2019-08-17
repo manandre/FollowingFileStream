@@ -95,17 +95,18 @@ namespace FollowingFileStream.Tests
                 Assert.AreEqual(0, ffs.Position);
                 Assert.AreEqual(8, ffs.Length);
 
+                var expected = "coucou" + Environment.NewLine;
                 var bytes = new byte[8];
-                Assert.AreEqual(8, ffs.Read(bytes, 0, bytes.Length));
-                Assert.AreEqual("coucou" + Environment.NewLine, System.Text.Encoding.Default.GetString(bytes));
+                Assert.AreEqual(expected.Length, ffs.Read(bytes, 0, bytes.Length));
+                Assert.AreEqual(expected, System.Text.Encoding.Default.GetString(bytes));
 
                 ffs.Position = 0;
-                Assert.AreEqual(8, ffs.ReadAsync(bytes, 0, bytes.Length).Result);
-                Assert.AreEqual("coucou" + Environment.NewLine, System.Text.Encoding.Default.GetString(bytes));
+                Assert.AreEqual(expected.Length, ffs.ReadAsync(bytes, 0, bytes.Length).Result);
+                Assert.AreEqual(expected, System.Text.Encoding.Default.GetString(bytes));
 
                 ffs.Position = 0;
-                Assert.AreEqual(8, ffs.EndRead(ffs.BeginRead(bytes, 0, bytes.Length, null, null)));
-                Assert.AreEqual("coucou" + Environment.NewLine, System.Text.Encoding.Default.GetString(bytes));
+                Assert.AreEqual(expected.Length, ffs.EndRead(ffs.BeginRead(bytes, 0, bytes.Length, null, null)));
+                Assert.AreEqual(expected, System.Text.Encoding.Default.GetString(bytes));
             }
         }
 
