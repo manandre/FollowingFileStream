@@ -102,13 +102,17 @@ namespace FollowingFileStream.Tests
                 Assert.AreEqual(expected.Length, ffs.Read(bytes, 0, bytes.Length));
                 Assert.AreEqual(expected, System.Text.Encoding.Default.GetString(bytes));
 
-                ffs.Position = 0;
+                ffs.Seek(0, SeekOrigin.Begin);
                 Assert.AreEqual(expected.Length, ffs.ReadAsync(bytes, 0, bytes.Length).Result);
                 Assert.AreEqual(expected, System.Text.Encoding.Default.GetString(bytes));
 
                 ffs.Position = 0;
                 Assert.AreEqual(expected.Length, ffs.EndRead(ffs.BeginRead(bytes, 0, bytes.Length, null, null)));
                 Assert.AreEqual(expected, System.Text.Encoding.Default.GetString(bytes));
+
+                var cts = new CancellationTokenSource();
+                cts.Cancel();
+                Assert.ThrowsExceptionAsync<OperationCanceledException>(() => ffs.ReadAsync(bytes, 0, bytes.Length, cts.Token));
             }
         }
 
@@ -146,6 +150,28 @@ namespace FollowingFileStream.Tests
                 Assert.IsTrue(copy.IsCompletedSuccessfully);
             }
             Assert.IsTrue(FileCompare(inputFilePath, outputFilePath));
+        }
+
+        [DataTestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public void FFS_Close(bool async)
+        {
+            using (var input = File.CreateText(inputFilePath))
+            using (var ffs = new FollowingFileStream(inputFilePath, 4*1024, async))
+            using (var destination = File.CreateText(outputFilePath))
+            {
+                destination.AutoFlush = true;
+                var os = destination.BaseStream;
+                var copy = ffs.CopyToAsync(os);
+                Assert.AreEqual(0, os.Length);
+                Thread.Sleep(200);
+                Assert.IsFalse(copy.IsCompleted);
+                input.WriteLine("coucou2");
+                ffs.Close();
+                Thread.Sleep(200);
+                Assert.IsTrue(copy.IsCompletedSuccessfully);
+            }
         }
 
         private bool FileCompare(string file1, string file2)

@@ -112,7 +112,7 @@ namespace FollowingFileStream
                 cts.Cancel();
                 using(locker.Lock())
                 {
-                    fileStream?.Dispose();
+                    fileStream.Dispose();
                 }
                 cts.Dispose();
                 // Free any other managed objects here.
