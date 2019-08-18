@@ -20,7 +20,7 @@ namespace FollowingFileStream
 
         public FollowingFileStream(string path, int bufferSize, bool useAsync)
         {
-             fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, useAsync);
+             fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, bufferSize, useAsync);
         }
 
         #endregion

@@ -87,10 +87,12 @@ namespace FollowingFileStream.Tests
             }
         }
 
-        [TestMethod]
-        public void FFS_Read()
+        [DataTestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public void FFS_Read(bool async)
         {
-            using (var ffs = new FollowingFileStream(inputFilePath))
+            using (var ffs = new FollowingFileStream(inputFilePath, 4*1096, async))
             {
                 Assert.AreEqual(0, ffs.Position);
                 Assert.AreEqual(8, ffs.Length);
@@ -110,10 +112,12 @@ namespace FollowingFileStream.Tests
             }
         }
 
-        [TestMethod]
-        public void FFS_CopyTo()
+        [DataTestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public void FFS_CopyTo(bool async)
         {
-            using (var ffs = new FollowingFileStream(inputFilePath))
+            using (var ffs = new FollowingFileStream(inputFilePath, 4*1096, async))
             using (var destination = File.CreateText(outputFilePath))
             {
                 ffs.CopyTo(destination.BaseStream);
@@ -121,11 +125,13 @@ namespace FollowingFileStream.Tests
             Assert.IsTrue(FileCompare(inputFilePath, outputFilePath));
         }
 
-        [TestMethod]
-        public void FFS_FollowingRead()
+        [DataTestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public void FFS_FollowingRead(bool async)
         {
             using (var input = File.CreateText(inputFilePath))
-            using (var ffs = new FollowingFileStream(inputFilePath))
+            using (var ffs = new FollowingFileStream(inputFilePath, 4*1024, async))
             using (var destination = File.CreateText(outputFilePath))
             {
                 destination.AutoFlush = true;
