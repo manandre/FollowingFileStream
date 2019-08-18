@@ -33,3 +33,4 @@ msbuild.wrn
 
 source.txt
 destination.txt
+lcov.*
