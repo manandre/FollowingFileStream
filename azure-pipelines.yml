@@ -20,10 +20,10 @@ steps:
 - script: dotnet restore ./All.sln
   displayName: Restore
 
-- script: dotnet build ./All.sln --configuration $(buildConfiguration)
+- script: dotnet build ./All.sln --no-restore --configuration $(buildConfiguration)
   displayName: Build
 
-- script: dotnet test ./Tests.sln --configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+- script: dotnet test ./Tests.sln --no-build --configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
   displayName: Test
 
 - task: PublishTestResults@2
@@ -37,3 +37,12 @@ steps:
   inputs:
     codeCoverageTool: 'Cobertura'
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
+
+- script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory) --version-suffix "-$(Build.BuildId)"
+  displayName: Pack
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
