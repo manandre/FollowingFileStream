@@ -38,7 +38,7 @@ steps:
     codeCoverageTool: 'Cobertura'
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
 
-- script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory) --version-suffix "-$(Build.BuildId)"
+- script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory) --version-suffix "$(Build.BuildId)"
   displayName: Pack
 
 - task: PublishBuildArtifacts@1
