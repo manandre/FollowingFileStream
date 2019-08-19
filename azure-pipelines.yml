@@ -7,11 +7,33 @@ trigger:
 - master
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 variables:
   buildConfiguration: 'Release'
 
+# steps:
+# - script: dotnet build --configuration $(buildConfiguration)
+#   displayName: 'dotnet build $(buildConfiguration)'
+
 steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+- script: dotnet restore ./All.sln
+  displayName: Restore
+
+- script: dotnet build ./All.sln --configuration $(buildConfiguration)
+  displayName: Build
+
+- script: dotnet test ./Tests.sln --configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+  displayName: Test
+
+- task: PublishTestResults@2
+  displayName: Publish Test Results
+  condition: succeededOrFailed()
+  inputs:
+    testRunner: VSTest
+    testResultsFiles: '**/*.trx'
+
+- task: PublishCodeCoverageResults@1
+  inputs:
+    codeCoverageTool: 'Cobertura'
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
