@@ -4,5 +4,11 @@
     <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>FollowingFileStream</PackageId>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionSuffix>$(VersionSuffix)</VersionSuffix>
+    <Authors>Emmanuel André</Authors>
+  </PropertyGroup>
 
 </Project>
