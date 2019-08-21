@@ -17,11 +17,12 @@ variables:
 #   displayName: 'dotnet build $(buildConfiguration)'
 
 steps:
-- task: SonarQubePrepare@4
+- task: SonarCloudPrepare@1
   inputs:
-    SonarQube: 'SonarQube'
+    SonarCloud: 'SonarCloud'
+    organization: 'manandre'
     scannerMode: 'MSBuild'
-    projectKey: 'manandre_FollowingFileStream'
+    projectKey: 'FollowingFileStream'
     projectVersion: '$(Build.BuildId)'
 
 - script: dotnet restore ./All.sln
@@ -45,14 +46,14 @@ steps:
     codeCoverageTool: 'Cobertura'
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
 
-- script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory) --version-suffix "$(Build.BuildId)"
-  displayName: Pack
+- task: SonarCloudAnalyze@1
 
-- task: SonarQubeAnalyze@4
-
-- task: SonarQubePublish@4
+- task: SonarCloudPublish@1
   inputs:
     pollingTimeoutSec: '300'
+
+- script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory) --version-suffix "$(Build.BuildId)"
+  displayName: Pack
 
 - task: PublishBuildArtifacts@1
   inputs:
