@@ -22,7 +22,7 @@ steps:
     SonarCloud: 'SonarCloud'
     organization: 'manandre'
     scannerMode: 'MSBuild'
-    projectKey: 'FollowingFileStream'
+    projectKey: 'manandre_FollowingFileStream'
     projectVersion: '$(Build.BuildId)'
 
 - script: dotnet restore ./All.sln
