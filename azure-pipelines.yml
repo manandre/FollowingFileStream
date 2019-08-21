@@ -17,6 +17,13 @@ variables:
 #   displayName: 'dotnet build $(buildConfiguration)'
 
 steps:
+- task: SonarQubePrepare@4
+  inputs:
+    SonarQube: 'SonarQube'
+    scannerMode: 'MSBuild'
+    projectKey: 'manandre_FollowingFileStream'
+    projectVersion: '$(Build.BuildId)'
+
 - script: dotnet restore ./All.sln
   displayName: Restore
 
@@ -40,6 +47,12 @@ steps:
 
 - script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory) --version-suffix "$(Build.BuildId)"
   displayName: Pack
+
+- task: SonarQubeAnalyze@4
+
+- task: SonarQubePublish@4
+  inputs:
+    pollingTimeoutSec: '300'
 
 - task: PublishBuildArtifacts@1
   inputs:
