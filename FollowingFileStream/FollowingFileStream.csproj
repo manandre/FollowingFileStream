@@ -9,6 +9,9 @@
     <VersionPrefix>1.0.0</VersionPrefix>
     <VersionSuffix>$(VersionSuffix)</VersionSuffix>
     <Authors>Emmanuel André</Authors>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
-
+  <ItemGroup>
+        <None Include="../LICENSE" Pack="true" PackagePath="."/>
+  </ItemGroup>
 </Project>
