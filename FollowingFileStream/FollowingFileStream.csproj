@@ -1,16 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
   <PropertyGroup>
     <PackageId>FollowingFileStream</PackageId>
-    <Version></Version>
     <Authors>Emmanuel André</Authors>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
   <ItemGroup>
-        <None Include="../LICENSE" Pack="true" PackagePath="."/>
+    <None Include="../LICENSE" Pack="true" PackagePath="."/>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="GitVersionTask" Version="5.0.1"/>
   </ItemGroup>
 </Project>
