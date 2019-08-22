@@ -161,7 +161,7 @@ namespace FollowingFileStream
         }
     }
 
-    public class AsyncLock : IDisposable
+    public sealed class AsyncLock : IDisposable
     {
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
  
