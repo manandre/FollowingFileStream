@@ -29,10 +29,10 @@ steps:
     projectVersion: '$(Build.BuildId)'
     extraProperties: 'sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/coverage/coverage.opencover.xml'
 
-- script: dotnet restore ./All.sln /p:Version='$(GitVersion.NuGetVersion)'
+- script: dotnet restore ./All.sln /p:Version=$(GitVersion.NuGetVersion)
   displayName: Restore
 
-- script: dotnet build ./All.sln --no-restore --configuration $(buildConfiguration) /p:Version='$(GitVersion.NuGetVersion)'
+- script: dotnet build ./All.sln --no-restore --configuration $(buildConfiguration) /p:Version=$(GitVersion.NuGetVersion)
   displayName: Build
 
 - script: dotnet test ./Tests.sln --no-build --configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/
