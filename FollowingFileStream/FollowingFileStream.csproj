@@ -6,6 +6,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <PackageId>FollowingFileStream</PackageId>
+    <Version></Version>
     <Authors>Emmanuel André</Authors>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
