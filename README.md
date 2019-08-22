@@ -2,7 +2,7 @@
 
 A Filestream implementation to follow a file being written.
 
-Any read operation will not report a zero result until the file is locked for writing operations.
+Any read operation will not report a zero result while the file is locked for writing operations.
 
 It is usually compared to the "tail -f" approach.
 
