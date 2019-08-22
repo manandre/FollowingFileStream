@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace FollowingFileStream
 {
-    class Program
+    static class Program
     {
         private const string InputPath = "source.txt";
         private const string OutputPath = "destination.txt";
@@ -19,8 +19,7 @@ namespace FollowingFileStream
 
         private static async Task WriteInput()
         {
-            using (var source = new FileStream(InputPath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            using (var sw = new StreamWriter(source))
+            using (var sw = new StreamWriter(new FileStream(InputPath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             using (var sr = new StreamReader(Console.OpenStandardInput()))
             {
                 await sr.CopyToAsync(sw, stopOn:"quit");

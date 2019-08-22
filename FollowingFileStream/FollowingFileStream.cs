@@ -7,9 +7,9 @@ namespace FollowingFileStream
 {
     public class FollowingFileStream : Stream
     {
-        private FileStream fileStream;
+        private readonly FileStream fileStream;
         private const int MillisecondsRetryTimeout = 100;
-        private CancellationTokenSource cts = new CancellationTokenSource();
+        private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly AsyncLock locker = new AsyncLock();
 
         #region Constructors
@@ -36,12 +36,12 @@ namespace FollowingFileStream
 
         public override long Position { get => fileStream.Position; set => fileStream.Position = value;}
 
-        public override int Read(byte[] array, int offset, int count)
+        public override int Read(byte[] buffer, int offset, int count)
         {
-            return ReadAsync(array, offset,count, CancellationToken.None).GetAwaiter().GetResult();
+            return ReadAsync(buffer, offset,count, CancellationToken.None).GetAwaiter().GetResult();
         }
 
-        public override async Task<int> ReadAsync(byte[] array, int offset, int count, CancellationToken cancellationToken)
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             int read = 0;
             using(await locker.LockAsync())
@@ -49,7 +49,7 @@ namespace FollowingFileStream
                 var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
                 do {
                     try{
-                        read = await fileStream.ReadAsync(array, offset, count, linkedCts.Token);
+                        read = await fileStream.ReadAsync(buffer, offset, count, linkedCts.Token);
                     }
                     catch (OperationCanceledException) {
                         cancellationToken.ThrowIfCancellationRequested();
@@ -163,7 +163,7 @@ namespace FollowingFileStream
 
     public class AsyncLock : IDisposable
     {
-        private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
  
         public async Task<AsyncLock> LockAsync()
         {
