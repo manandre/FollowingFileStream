@@ -17,6 +17,9 @@ variables:
 #   displayName: 'dotnet build $(buildConfiguration)'
 
 steps:
+- task: GitVersion@5
+  inputs:
+    runtime: 'core'
 - task: SonarCloudPrepare@1
   inputs:
     SonarCloud: 'SonarCloud'
@@ -29,7 +32,7 @@ steps:
 - script: dotnet restore ./All.sln
   displayName: Restore
 
-- script: dotnet build ./All.sln --no-restore --configuration $(buildConfiguration)
+- script: dotnet build ./All.sln --no-restore --configuration $(buildConfiguration) /p:Version='$(GitVersion.NuGetVersion)'
   displayName: Build
 
 - script: dotnet test ./Tests.sln --no-build --configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/
@@ -65,7 +68,7 @@ steps:
   inputs:
     pollingTimeoutSec: '300'
 
-- script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory) --version-suffix "$(Build.BuildId)"
+- script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory)
   displayName: Pack
 
 - task: PublishBuildArtifacts@1
