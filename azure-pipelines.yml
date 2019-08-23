@@ -47,7 +47,7 @@ steps:
   displayName: Build
   inputs:
     command: 'build'
-    projects: '**/*.csproj'
+    projects: 'All.sln'
     arguments: '--configuration $(BuildConfiguration) /p:Version=$(GitVersion.NuGetVersion)'
     versioningScheme: byBuildNumber
 
