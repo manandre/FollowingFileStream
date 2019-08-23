@@ -21,7 +21,6 @@ steps:
   inputs:
     runtime: 'core'
 - task: SonarCloudPrepare@1
-  displayName: Restore
   inputs:
     SonarCloud: 'SonarCloud'
     organization: 'manandre'
@@ -34,9 +33,10 @@ steps:
 #   displayName: Restore
 
 - task: DotNetCoreCLI@2
+  displayName: Restore
   inputs:
     command: 'restore'
-    projects: 'All.sln'
+    projects: '**/*.csproj'
     feedsToUse: 'select'
     versioningScheme: byBuildNumber
 
@@ -47,7 +47,7 @@ steps:
   displayName: Build
   inputs:
     command: 'build'
-    projects: 'All.sln'
+    projects: '**/*.csproj'
     arguments: '--configuration $(BuildConfiguration) /p:Version=$(GitVersion.NuGetVersion)'
     versioningScheme: byBuildNumber
 
@@ -58,7 +58,7 @@ steps:
   displayName: Test
   inputs:
     command: 'test'
-    projects: 'Test.sln'
+    projects: '**/*.Tests.csproj'
     arguments: '--configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/'
     publishTestResults: false
 
@@ -99,7 +99,7 @@ steps:
   displayName: Pack
   inputs:
     command: 'pack'
-    packagesToPack: 'All.sln'
+    packagesToPack: '**/*.csproj'
     nobuild: true
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'GitVersion.NuGetVersion'
