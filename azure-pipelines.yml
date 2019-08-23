@@ -12,10 +12,6 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
-# steps:
-# - script: dotnet build --configuration $(buildConfiguration)
-#   displayName: 'dotnet build $(buildConfiguration)'
-
 steps:
 - task: GitVersion@5
   inputs:
@@ -29,14 +25,36 @@ steps:
     projectVersion: '$(Build.BuildId)'
     extraProperties: 'sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/coverage/coverage.opencover.xml'
 
-- script: dotnet restore ./All.sln /p:Version=$(GitVersion.NuGetVersion)
+- task: DotNetCoreCLI@2
   displayName: Restore
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
+    feedsToUse: 'select'
+    versioningScheme: byBuildNumber
 
-- script: dotnet build ./All.sln --no-restore --configuration $(buildConfiguration) /p:Version=$(GitVersion.NuGetVersion)
+- task: DotNetCoreCLI@2
   displayName: Build
+  inputs:
+    command: 'build'
+    projects: 'All.sln' # Mandatory for SonarQube !?!
+    arguments: '--configuration $(BuildConfiguration) /p:Version=$(GitVersion.NuGetVersion)'
+    versioningScheme: byBuildNumber
 
-- script: dotnet test ./Tests.sln --no-build --configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/
+- task: DotNetCoreCLI@2
   displayName: Test
+  inputs:
+    command: 'test'
+    projects: '**/*.Tests.csproj'
+    arguments: '--configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/'
+    publishTestResults: false
+
+- task: PublishTestResults@2
+  displayName: Publish Test Results
+  condition: succeededOrFailed()
+  inputs:
+    testRunner: VSTest
+    testResultsFiles: '**/*.trx'
 
 - script: |
     dotnet tool install dotnet-reportgenerator-globaltool --tool-path . 
@@ -50,13 +68,6 @@ steps:
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Run Reportgenerator on Windows
 
-- task: PublishTestResults@2
-  displayName: Publish Test Results
-  condition: succeededOrFailed()
-  inputs:
-    testRunner: VSTest
-    testResultsFiles: '**/*.trx'
-
 - task: PublishCodeCoverageResults@1
   inputs:
     codeCoverageTool: 'Cobertura'
@@ -68,8 +79,14 @@ steps:
   inputs:
     pollingTimeoutSec: '300'
 
-- script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory)
+- task: DotNetCoreCLI@2
   displayName: Pack
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/*.csproj'
+    nobuild: true
+    versioningScheme: 'byEnvVar'
+    versionEnvVar: 'GitVersion.NuGetVersion'
 
 - task: PublishBuildArtifacts@1
   inputs:
