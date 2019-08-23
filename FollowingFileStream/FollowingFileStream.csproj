@@ -6,12 +6,10 @@
   <PropertyGroup>
     <PackageId>FollowingFileStream</PackageId>
     <Authors>Emmanuel André</Authors>
+    <Version>$(Version)</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../LICENSE" Pack="true" PackagePath="."/>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="GitVersionTask" Version="5.0.1"/>
   </ItemGroup>
 </Project>
