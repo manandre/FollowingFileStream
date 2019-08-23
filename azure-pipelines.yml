@@ -21,6 +21,7 @@ steps:
   inputs:
     runtime: 'core'
 - task: SonarCloudPrepare@1
+  displayName: Restore
   inputs:
     SonarCloud: 'SonarCloud'
     organization: 'manandre'
@@ -29,14 +30,44 @@ steps:
     projectVersion: '$(Build.BuildId)'
     extraProperties: 'sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/coverage/coverage.opencover.xml'
 
-- script: dotnet restore ./All.sln /p:Version=$(GitVersion.NuGetVersion)
-  displayName: Restore
+# - script: dotnet restore ./All.sln /p:Version=$(GitVersion.NuGetVersion)
+#   displayName: Restore
 
-- script: dotnet build ./All.sln --no-restore --configuration $(buildConfiguration) /p:Version=$(GitVersion.NuGetVersion)
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'restore'
+    projects: 'All.sln'
+    feedsToUse: 'select'
+    versioningScheme: byBuildNumber
+
+# - script: dotnet build ./All.sln --no-restore --configuration $(buildConfiguration) /p:Version=$(GitVersion.NuGetVersion)
+#   displayName: Build
+
+- task: DotNetCoreCLI@2
   displayName: Build
+  inputs:
+    command: 'build'
+    projects: 'All.sln'
+    arguments: '--configuration $(BuildConfiguration) /p:Version=$(GitVersion.NuGetVersion)'
+    versioningScheme: byBuildNumber
 
-- script: dotnet test ./Tests.sln --no-build --configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/
+# - script: dotnet test ./Tests.sln --no-build --configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/
+#   displayName: Test
+
+- task: DotNetCoreCLI@2
   displayName: Test
+  inputs:
+    command: 'test'
+    projects: 'Test.sln'
+    arguments: '--configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/'
+    publishTestResults: false
+
+- task: PublishTestResults@2
+  displayName: Publish Test Results
+  condition: succeededOrFailed()
+  inputs:
+    testRunner: VSTest
+    testResultsFiles: '**/*.trx'
 
 - script: |
     dotnet tool install dotnet-reportgenerator-globaltool --tool-path . 
@@ -50,13 +81,6 @@ steps:
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Run Reportgenerator on Windows
 
-- task: PublishTestResults@2
-  displayName: Publish Test Results
-  condition: succeededOrFailed()
-  inputs:
-    testRunner: VSTest
-    testResultsFiles: '**/*.trx'
-
 - task: PublishCodeCoverageResults@1
   inputs:
     codeCoverageTool: 'Cobertura'
@@ -68,8 +92,17 @@ steps:
   inputs:
     pollingTimeoutSec: '300'
 
-- script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory)
+# - script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory)
+#   displayName: Pack
+
+- task: DotNetCoreCLI@2
   displayName: Pack
+  inputs:
+    command: 'pack'
+    packagesToPack: 'All.sln'
+    nobuild: true
+    versioningScheme: 'byEnvVar'
+    versionEnvVar: 'GitVersion.NuGetVersion'
 
 - task: PublishBuildArtifacts@1
   inputs:
