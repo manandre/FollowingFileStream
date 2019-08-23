@@ -12,10 +12,6 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
-# steps:
-# - script: dotnet build --configuration $(buildConfiguration)
-#   displayName: 'dotnet build $(buildConfiguration)'
-
 steps:
 - task: GitVersion@5
   inputs:
@@ -29,9 +25,6 @@ steps:
     projectVersion: '$(Build.BuildId)'
     extraProperties: 'sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/coverage/coverage.opencover.xml'
 
-# - script: dotnet restore ./All.sln /p:Version=$(GitVersion.NuGetVersion)
-#   displayName: Restore
-
 - task: DotNetCoreCLI@2
   displayName: Restore
   inputs:
@@ -40,19 +33,13 @@ steps:
     feedsToUse: 'select'
     versioningScheme: byBuildNumber
 
-# - script: dotnet build ./All.sln --no-restore --configuration $(buildConfiguration) /p:Version=$(GitVersion.NuGetVersion)
-#   displayName: Build
-
 - task: DotNetCoreCLI@2
   displayName: Build
   inputs:
     command: 'build'
-    projects: 'All.sln'
+    projects: 'All.sln' # Mandatory for SonarQube !?!
     arguments: '--configuration $(BuildConfiguration) /p:Version=$(GitVersion.NuGetVersion)'
     versioningScheme: byBuildNumber
-
-# - script: dotnet test ./Tests.sln --no-build --configuration $(buildConfiguration) --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/
-#   displayName: Test
 
 - task: DotNetCoreCLI@2
   displayName: Test
@@ -91,9 +78,6 @@ steps:
 - task: SonarCloudPublish@1
   inputs:
     pollingTimeoutSec: '300'
-
-# - script: dotnet pack ./All.sln --configuration $(buildConfiguration) --no-build -o $(Build.ArtifactStagingDirectory)
-#   displayName: Pack
 
 - task: DotNetCoreCLI@2
   displayName: Pack
