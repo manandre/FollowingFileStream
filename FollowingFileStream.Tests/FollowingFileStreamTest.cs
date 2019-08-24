@@ -67,7 +67,19 @@ namespace FollowingFileStream.Tests
                 Assert.IsTrue(ffs.CanRead);
                 Assert.IsFalse(ffs.CanWrite);
                 Assert.IsTrue(ffs.CanSeek);
-                Assert.IsFalse(ffs.CanTimeout);
+            }
+        }
+
+        [DataTestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        [TestMethod]
+        public void FFS_Properties(bool async)
+        {
+            using (var ffs = new FollowingFileStream(inputFilePath, 4*1096, async))
+            {
+                Assert.AreEqual(inputFilePath, ffs.Name);
+                Assert.AreEqual(async, ffs.IsAsync);
             }
         }
 
