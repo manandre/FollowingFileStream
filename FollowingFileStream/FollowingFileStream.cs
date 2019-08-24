@@ -69,7 +69,9 @@ namespace FollowingFileStream
         }
 
         /// <summary>
-        /// 
+        /// Initializes a new instance of the FollowingFileStream class with the specified
+        /// path, buffer size, and synchronous
+        /// or asynchronous state.
         /// </summary>
         /// <param name="path">A relative or absolute path for the file
         /// that the current FollowingFileStream object will encapsulate.</param>
@@ -161,8 +163,6 @@ namespace FollowingFileStream
         /// true if the stream supports seeking; false if the stream is closed.
         /// </returns>
         public override bool CanSeek => fileStream.CanSeek;
-
-        public override bool CanTimeout => fileStream.CanTimeout;
 
         /// <summary>
         /// Gets the length in bytes of the stream.
@@ -379,6 +379,25 @@ namespace FollowingFileStream
             throw new NotSupportedException();
         }
 
+        /// <summary>
+        /// Sets the current position of this stream to the given value.
+        /// </summary>
+        /// <param name="offset">The point relative to origin from which to begin seeking.</param>
+        /// <param name="origin">Specifies the beginning, the end, or the current position as a reference point
+        /// for offset, using a value of type System.IO.SeekOrigin.</param>
+        /// <returns>The new position in the stream.</returns>
+        /// <exception cref="System.NotSupportedException">
+        /// FollowingFileStream.CanSeek for this stream is false.
+        /// </exception>
+        /// <exception cref="System.IO.IOException">
+        /// An I/O error, such as the file being closed, occurred.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Seeking is attempted before the beginning of the stream.
+        /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        /// Methods were called after the stream was closed.
+        /// </exception>
         public override long Seek(long offset, SeekOrigin origin)
         {
             using(locker.Lock())

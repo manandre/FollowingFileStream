@@ -67,7 +67,6 @@ namespace FollowingFileStream.Tests
                 Assert.IsTrue(ffs.CanRead);
                 Assert.IsFalse(ffs.CanWrite);
                 Assert.IsTrue(ffs.CanSeek);
-                Assert.IsFalse(ffs.CanTimeout);
             }
         }
 
