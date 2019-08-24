@@ -127,7 +127,7 @@ namespace FollowingFileStream
         /// Gets the name of the FollowingFileStream that was passed to the constructor.
         /// </summary>
         /// <value>A string that is the name of the FollowingFileStream.</value>
-        public virtual string Name { get; }
+        public virtual string Name => fileStream.Name;
 
         /// <summary>
         /// Gets a value indicating whether the FollowingFileStream was opened asynchronously or synchronously.

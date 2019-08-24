@@ -71,6 +71,19 @@ namespace FollowingFileStream.Tests
             }
         }
 
+        [DataTestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        [TestMethod]
+        public void FFS_Properties(bool async)
+        {
+            using (var ffs = new FollowingFileStream(inputFilePath, 4*1096, async))
+            {
+                Assert.AreEqual(inputFilePath, ffs.Name);
+                Assert.AreEqual(async, ffs.IsAsync);
+            }
+        }
+
         [TestMethod]
         public void FFS_Modification()
         {
