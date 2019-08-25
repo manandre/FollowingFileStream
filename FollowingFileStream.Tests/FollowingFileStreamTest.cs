@@ -1,10 +1,9 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using FollowingFileStream;
 using System;
 using System.IO;
 using System.Threading;
 
-namespace FollowingFileStream.Tests
+namespace Manandre.IO
 {
     [TestClass]
     public class FollowingFileStreamTest
@@ -73,7 +72,6 @@ namespace FollowingFileStream.Tests
         [DataTestMethod]
         [DataRow(false)]
         [DataRow(true)]
-        [TestMethod]
         public void FFS_Properties(bool async)
         {
             using (var ffs = new FollowingFileStream(inputFilePath, 4*1096, async))

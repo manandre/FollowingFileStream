@@ -3,13 +3,13 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FollowingFileStream
+namespace Manandre.IO
 {
     /// <summary>
     /// Provides a System.IO.Stream for following a file being written,
     /// supporting both synchronous and asynchronous read operations.
     /// </summary>
-    public class FollowingFileStream : Stream
+    public class FollowingFileStream : AsyncStream
     {
         /// <summary>
         /// The underlying filestream
@@ -19,14 +19,7 @@ namespace FollowingFileStream
         /// Time before retrying write access to followed file
         /// </summary>
         private const int MillisecondsRetryTimeout = 100;
-        /// <summary>
-        /// Cancellation token source for retry attempts
-        /// </summary>
-        private readonly CancellationTokenSource cts = new CancellationTokenSource();
-        /// <summary>
-        /// Asynchronous lock to avoid race conditions
-        /// </summary>
-        private readonly AsyncLock locker = new AsyncLock();
+
 
         #region Constructors
         /// <summary>
@@ -124,6 +117,7 @@ namespace FollowingFileStream
         {
             fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, bufferSize, useAsync);
         }
+        #endregion
 
         /// <summary>
         /// Gets the name of the FollowingFileStream that was passed to the constructor.
@@ -138,7 +132,6 @@ namespace FollowingFileStream
         /// true if the FollowongFileStream was opened asynchronously; otherwise, false.
         /// </returns>
         public virtual bool IsAsync => fileStream.IsAsync;
-        #endregion
 
         /// <summary>
         /// Gets a value indicating whether the current stream supports writing.
@@ -195,41 +188,6 @@ namespace FollowingFileStream
         /// Attempted seeking past the end of a stream that does not support this.
         /// </exception>
         public override long Position { get => fileStream.Position; set => fileStream.Position = value; }
-
-        /// <summary>
-        /// Reads a block of bytes from the stream and writes the data in a given buffer.
-        /// </summary>
-        /// <param name="buffer">When this method returns, contains the specified byte array with the values between
-        /// offset and (offset + count - 1) replaced by the bytes read from the current source.</param>
-        /// <param name="offset">The byte offset in array at which the read bytes will be placed.</param>
-        /// <param name="count">The maximum number of bytes to read.</param>
-        /// <returns>
-        /// The total number of bytes read into the buffer. This might be less than the number
-        /// of bytes requested if that number of bytes are not currently available, or zero
-        /// if the end of the stream is reached.
-        /// </returns>
-        /// <exception cref="System.ArgumentNullException">
-        /// buffer is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// offset and count describe an invalid range in array.
-        /// </exception>
-        /// <exception cref="System.NotSupportedException">
-        /// FollowingFileStream.CanRead for this stream is false.
-        /// </exception>
-        /// <exception cref="System.IO.IOException">
-        /// An I/O error occurred.
-        /// </exception>
-        /// <exception cref="System.ArgumentOutOfRangeException">
-        /// offset or count is negative.
-        /// </exception>
-        /// <exception cref="System.ObjectDisposedException">
-        /// Methods were called after the stream was closed.
-        /// </exception>
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            return ReadAsync(buffer, offset, count, CancellationToken.None).GetAwaiter().GetResult();
-        }
 
         /// <summary>
         /// Asynchronously reads a sequence of bytes from the current stream, advances the
@@ -376,16 +334,10 @@ namespace FollowingFileStream
                 {
                     fileStream.Dispose();
                 }
-                cts.Dispose();
-                // Free any other managed objects here.
-                //
             }
 
-            // Free any unmanaged objects here.
-            //
-
             disposed = true;
-            // Call fileStream class implementation.
+            // Call stream class implementation.
             base.Dispose(disposing);
         }
 
@@ -393,7 +345,7 @@ namespace FollowingFileStream
         /// Clears buffers for this stream and causes any buffered data to be written to the file.
         /// </summary>
         /// <exception cref="System.NotSupportedException">Not supported</exception>
-        public override void Flush()
+        public override Task FlushAsync(CancellationToken cancellationToken)
         {
             throw new NotSupportedException();
         }
@@ -436,122 +388,12 @@ namespace FollowingFileStream
 
 
         /// <summary>
-        /// Writes a block of bytes to the file stream.
+        /// Asynchronously writes a block of bytes to the file stream.
         /// </summary>
         /// <exception cref="System.NotSupportedException">Not supported</exception>
-        public override void Write(byte[] buffer, int offset, int count)
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Begins an asynchronous read operation. (Consider using FollowingFileStream.ReadAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)
-        /// instead.)
-        /// </summary>
-        /// <param name="buffer">The buffer to read data into.</param>
-        /// <param name="offset">The byte offset in array at which to begin reading.</param>
-        /// <param name="count">The maximum number of bytes to read.</param>
-        /// <param name="callback">The method to be called when the asynchronous read operation is completed.</param>
-        /// <param name="state">A user-provided object that distinguishes this particular asynchronous read request
-        /// from other requests.</param>
-        /// <returns>An object that references the asynchronous read.</returns>
-        /// <exception cref="System.ArgumentNullException">
-        /// buffer is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// offset and count describe an invalid range in array.
-        /// </exception>
-        /// <exception cref="System.NotSupportedException">
-        /// FollowingFileStream.CanRead for this stream is false.
-        /// </exception>
-        /// <exception cref="System.InvalidOperationException">
-        /// The stream is currently in use by a previous read operation.
-        /// </exception>
-        /// <exception cref="System.ArgumentOutOfRangeException">
-        /// offset or count is negative.
-        /// </exception>
-        /// <exception cref="System.IO.IOException">
-        /// An asynchronous read was attempted past the end of the file.
-        /// </exception>
-        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-        {
-            return ReadAsync(buffer, offset, count, CancellationToken.None).AsApm(callback, state);
-        }
-
-        /// <summary>
-        /// Waits for the pending asynchronous read operation to complete. (Consider using
-        /// FollowingFileStream.ReadAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)
-        /// instead.)
-        /// </summary>
-        /// <param name="asyncResult">The reference to the pending asynchronous request to wait for.</param>
-        /// <returns>
-        /// The number of bytes read from the stream, between 0 and the number of bytes you
-        /// requested. Streams only return 0 at the end of the stream, otherwise, they should
-        /// block until at least 1 byte is available.
-        /// </returns>
-        /// <exception cref="System.ArgumentNullException">
-        /// asyncResult is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// This System.IAsyncResult object was not created by calling FollwingFileStream.BeginRead(System.Byte[],System.Int32,System.Int32,System.AsyncCallback,System.Object)
-        /// on this class.
-        /// </exception>
-        /// <exception cref="System.InvalidOperationException">
-        /// FollowingFileStream.EndRead(System.IAsyncResult) is called multiple times.
-        /// </exception>
-        /// <exception cref="System.IO.IOException">
-        /// The stream is closed or an internal error has occurred.
-        /// </exception>
-        public override int EndRead(IAsyncResult asyncResult)
-        {
-            return ((Task<int>)asyncResult).Result;
-        }
-    }
-
-    public sealed class AsyncLock : IDisposable
-    {
-        private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
-
-        public async Task<AsyncLock> LockAsync()
-        {
-            await _semaphoreSlim.WaitAsync();
-            return this;
-        }
-
-        public AsyncLock Lock()
-        {
-            return LockAsync().GetAwaiter().GetResult();
-        }
-
-        public void Dispose()
-        {
-            _semaphoreSlim.Release();
-        }
-    }
-
-    public static class AsyncExtensions
-    {
-        public static IAsyncResult AsApm<T>(this Task<T> task,
-                                            AsyncCallback callback,
-                                            object state)
-        {
-            if (task == null)
-                throw new ArgumentNullException("task");
-
-            var tcs = new TaskCompletionSource<T>(state);
-            task.ContinueWith(t =>
-                            {
-                                if (t.IsFaulted)
-                                    tcs.TrySetException(t.Exception.InnerExceptions);
-                                else if (t.IsCanceled)
-                                    tcs.TrySetCanceled();
-                                else
-                                    tcs.TrySetResult(t.Result);
-
-                                if (callback != null)
-                                    callback(tcs.Task);
-                            }, TaskScheduler.Default);
-            return tcs.Task;
         }
     }
 }

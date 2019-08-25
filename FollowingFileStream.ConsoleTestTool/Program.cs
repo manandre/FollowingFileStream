@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace FollowingFileStream
+namespace Manandre.IO
 {
     static class Program
     {
