@@ -1,10 +1,9 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using FollowingFileStream;
 using System;
 using System.IO;
 using System.Threading;
 
-namespace FollowingFileStream.Tests
+namespace Manandre.IO
 {
     [TestClass]
     public class FollowingFileStreamTest

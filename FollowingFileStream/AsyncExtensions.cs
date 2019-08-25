@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace FollowingFileStream
+namespace Manandre.Threading
 {
     internal static class AsyncExtensions
     {

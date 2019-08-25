@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FollowingFileStream
+namespace Manandre.IO
 {
     /// <summary>
     /// Provides a System.IO.Stream for following a file being written,

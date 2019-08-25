@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FollowingFileStream
+namespace Manandre.Threading
 {
     public sealed class AsyncLock : IDisposable
     {
