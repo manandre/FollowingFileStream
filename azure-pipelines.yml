@@ -90,10 +90,7 @@ steps:
 
 - task: PublishSymbols@2
   inputs:
-    SearchPattern: '**\\bin\\**\\*.(pdb|dll)'
     SymbolServerType: 'TeamServices'
-    SymbolsProduct: 'FollowingFileStream'
-    SymbolsVersion: '$(Build.BuildNumber)'
 
 - task: PublishBuildArtifacts@1
   inputs:
