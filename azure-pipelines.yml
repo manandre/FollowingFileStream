@@ -90,6 +90,7 @@ steps:
 
 - task: PublishSymbols@2
   inputs:
+    IndexSources: false
     SymbolServerType: 'TeamServices'
 
 - task: PublishBuildArtifacts@1
