@@ -391,7 +391,7 @@ namespace Manandre.IO
         /// Asynchronously writes a block of bytes to the file stream.
         /// </summary>
         /// <exception cref="System.NotSupportedException">Not supported</exception>
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken token)
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             throw new NotSupportedException();
         }
