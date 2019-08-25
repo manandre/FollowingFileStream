@@ -90,7 +90,7 @@ steps:
 
 - task: PublishSymbols@2
   inputs:
-    SearchPattern: '**/bin/**/*.(pdb'
+    SearchPattern: 'FollowingFileStream/bin/**/*.(pdb|dll)'
     IndexSources: false
     SymbolServerType: 'TeamServices'
     SymbolsProduct: 'FollowingFileStream'
