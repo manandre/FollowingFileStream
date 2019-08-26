@@ -91,8 +91,8 @@ steps:
 - task: PublishSymbols@2
   inputs:
     SearchPattern: |
-      **/bin/**/*.pdb
-      **/bin/**/*.dll
+      **/bin/**/FollowingFileStream.pdb
+      **/bin/**/FollowingFileStream.dll
     IndexSources: false
     SymbolServerType: 'TeamServices'
 
