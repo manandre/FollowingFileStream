@@ -90,7 +90,9 @@ steps:
 
 - task: PublishSymbols@2
   inputs:
-    SearchPattern: '**\bin\**\*.(pdb|dll)'
+    SearchPattern: |
+      **/bin/**/*.pdb
+      **/bin/**/*.dll
     IndexSources: false
     SymbolServerType: 'TeamServices'
 
