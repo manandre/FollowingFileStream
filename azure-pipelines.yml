@@ -88,6 +88,14 @@ steps:
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'GitVersion.NuGetVersion'
 
+- task: PublishSymbols@2
+  inputs:
+    SearchPattern: |
+      **/bin/**/FollowingFileStream.pdb
+      **/bin/**/FollowingFileStream.dll
+    IndexSources: false
+    SymbolServerType: 'TeamServices'
+
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
