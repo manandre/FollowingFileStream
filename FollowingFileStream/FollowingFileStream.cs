@@ -226,34 +226,28 @@ namespace Manandre.IO
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             int read = 0;
-            using (await locker.LockAsync())
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
+            try
             {
-                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
-                do
+                using (await locker.LockAsync(linkedCts.Token))
                 {
-                    try
+                    do
                     {
                         read = await fileStream.ReadAsync(buffer, offset, count, linkedCts.Token);
                     }
-                    catch (OperationCanceledException)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-                } while (read == 0 && await RetryNeededAsync());
+                    while (read == 0 && await RetryNeededAsync());
 
-                // In case the filestream has been written and closed between the last read operation
-                // and the IsFileLockedForWriting() check
-                if (read == 0)
-                {
-                    try
+                    // In case the filestream has been written and closed between the last read operation
+                    // and the IsFileLockedForWriting() check
+                    if (read == 0)
                     {
                         read = await fileStream.ReadAsync(buffer, offset, count, linkedCts.Token);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
                     }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
             }
             return read;
         }
