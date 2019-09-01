@@ -20,6 +20,10 @@ namespace Manandre.IO
         /// </summary>
         private const int MillisecondsRetryTimeout = 100;
 
+        /// <summary>
+        /// CancellationTokenSource
+        /// </summary>
+        private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
         #region Constructors
         /// <summary>
@@ -226,35 +230,19 @@ namespace Manandre.IO
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             int read = 0;
-            using (await locker.LockAsync())
+            do
             {
-                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
-                do
-                {
-                    try
-                    {
-                        read = await fileStream.ReadAsync(buffer, offset, count, linkedCts.Token);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-                } while (read == 0 && await RetryNeededAsync());
-
-                // In case the filestream has been written and closed between the last read operation
-                // and the IsFileLockedForWriting() check
-                if (read == 0)
-                {
-                    try
-                    {
-                        read = await fileStream.ReadAsync(buffer, offset, count, linkedCts.Token);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-                }
+                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken);
             }
+            while (read == 0 && await RetryNeededAsync());
+
+            // In case the filestream has been written and closed between the last read operation
+            // and the IsFileLockedForWriting() check
+            if (read == 0)
+            {
+                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken);
+            }
+
             return read;
         }
 
@@ -330,10 +318,7 @@ namespace Manandre.IO
             if (disposing)
             {
                 cts.Cancel();
-                using (locker.Lock())
-                {
-                    fileStream.Dispose();
-                }
+                fileStream.Dispose();
             }
 
             disposed = true;
@@ -371,10 +356,7 @@ namespace Manandre.IO
         /// </exception>
         public override long Seek(long offset, SeekOrigin origin)
         {
-            using (locker.Lock())
-            {
-                return fileStream.Seek(offset, origin);
-            }
+            return fileStream.Seek(offset, origin);
         }
 
         /// <summary>
