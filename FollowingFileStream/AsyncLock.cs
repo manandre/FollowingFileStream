@@ -21,7 +21,7 @@ namespace Manandre.Threading
         /// <summary>
         /// Asynchronous method to request lock.
         /// </summary>
-        /// <param name="cancellationToken">AsyncLock taken an optional CancellationToken, which can be used to cancel the acquiring of the lock.</param>
+        /// <param name="cancellationToken">AsyncLock takes an optional CancellationToken, which can be used to cancel the acquiring of the lock.</param>
         /// <returns>
         /// The task returned from LockAsync will enter the Completed state when it has acquired the AsyncLock.
         /// That same task will enter the Canceled state if the CancellationToken is signaled before the wait is satisfied;
@@ -36,10 +36,11 @@ namespace Manandre.Threading
         /// <summary>
         /// Synchronous method to request lock.
         /// </summary>
+        /// <param name="cancellationToken">AsyncLock takes an optional CancellationToken, which can be used to cancel the acquiring of the lock.</param>
         /// <returns>An instance of AsyncLock</returns>
-        public AsyncLock Lock()
+        public AsyncLock Lock(CancellationToken cancellationToken = default(CancellationToken))
         {
-            return LockAsync().GetAwaiter().GetResult();
+            return LockAsync(cancellationToken).GetAwaiter().GetResult();
         }
 
         /// <summary>
