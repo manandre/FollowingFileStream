@@ -321,7 +321,7 @@ namespace Manandre.IO
             return new AsyncSafeStream(stream);
         }
 
-        private sealed class AsyncSafeStream : AsyncStream, IDisposable
+        private sealed class AsyncSafeStream : AsyncStream
         {
             private readonly AsyncStream _stream;
             private readonly CancellationTokenSource cts = new CancellationTokenSource();
@@ -424,10 +424,10 @@ namespace Manandre.IO
                     return _stream.Seek(offset, origin);
             }
 
-            public override void SetLength(long length)
+            public override void SetLength(long value)
             {
                 using (locker.Lock(cts.Token))
-                    _stream.SetLength(length);
+                    _stream.SetLength(value);
             }
 
             public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
