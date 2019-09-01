@@ -168,7 +168,7 @@ namespace Manandre.IO
         public void FFS_Close(bool async)
         {
             using (var input = File.CreateText(inputFilePath))
-            using (var ffs = new FollowingFileStream(inputFilePath, 4*1024, async))
+            using (var ffs = new FollowingFileStream(inputFilePath, 4*1024, async).Synchronized())
             using (var destination = File.CreateText(outputFilePath))
             {
                 destination.AutoFlush = true;
