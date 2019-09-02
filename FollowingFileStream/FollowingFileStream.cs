@@ -62,7 +62,9 @@ namespace Manandre.IO
         /// </exception>
         public FollowingFileStream(string path)
         {
+            #pragma warning disable S2930
             fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            #pragma warning restore S2930
         }
 
         /// <summary>
@@ -119,7 +121,9 @@ namespace Manandre.IO
         /// </exception>
         public FollowingFileStream(string path, int bufferSize, bool useAsync)
         {
+            #pragma warning disable S2930
             fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, bufferSize, useAsync);
+            #pragma warning restore S2930
         }
         #endregion
 

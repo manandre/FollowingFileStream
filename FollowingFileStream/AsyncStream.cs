@@ -303,7 +303,10 @@ namespace Manandre.IO
         /// </summary>
         /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
         ///</param>
+        #pragma warning disable S3881
         protected sealed override void Dispose(bool disposing) => DisposeAsync(disposing).GetAwaiter().GetResult();
+        #pragma warning restore S3881
+        
 
         /// <summary>
         /// Synchronized version of an async stream
@@ -484,6 +487,7 @@ namespace Manandre.IO
                 }
                 finally
                 {
+                    disposed = true;
                     await base.DisposeAsync(disposing);
                 }
             }
