@@ -302,7 +302,7 @@ namespace Manandre.IO
             return false;
         }
 
-        bool disposed = false;
+        private bool disposed = false;
 
         /// <summary>
         /// Releases the unmanaged resources used by the FollowingFileStream and optionally
@@ -310,20 +310,25 @@ namespace Manandre.IO
         /// </summary>
         /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
         ///</param>
-        protected override void Dispose(bool disposing)
+        protected override async ValueTask DisposeAsync(bool disposing)
         {
             if (disposed)
                 return;
 
-            if (disposing)
+            try
             {
-                cts.Cancel();
-                fileStream.Dispose();
+                if (disposing)
+                {
+                    cts.Cancel();
+                    await fileStream.DisposeAsync();
+                }
             }
-
-            disposed = true;
-            // Call stream class implementation.
-            base.Dispose(disposing);
+            finally
+            {
+                disposed = true;
+                // Call stream class implementation.
+                base.Dispose(disposing);
+            }
         }
 
         /// <summary>
