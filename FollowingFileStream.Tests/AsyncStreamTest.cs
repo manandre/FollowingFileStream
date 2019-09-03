@@ -135,7 +135,7 @@ namespace Manandre.IO
             Assert.AreEqual(expected2, read);
             read = synchronized.Read(null, 0, 0);
             Assert.AreEqual(expected2, read);
-            read = sut.Object.EndRead(sut.Object.BeginRead(null, 0, 0, null, null));
+            read = synchronized.EndRead(synchronized.BeginRead(null, 0, 0, null, null));
             Assert.AreEqual(expected2, read);
 
             // Write
@@ -145,7 +145,7 @@ namespace Manandre.IO
             sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
             synchronized.Write(null, 0, 0);
             sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-            synchronized.EndWrite(sut.Object.BeginWrite(null, 0, 0, null, null));
+            synchronized.EndWrite(synchronized.BeginWrite(null, 0, 0, null, null));
             sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
             Assert.ThrowsExceptionAsync<OperationCanceledException>(() => synchronized.WriteAsync(null, 0, 0, new CancellationToken(true)));
 
