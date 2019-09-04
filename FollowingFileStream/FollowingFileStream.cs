@@ -62,9 +62,9 @@ namespace Manandre.IO
         /// </exception>
         public FollowingFileStream(string path)
         {
-            #pragma warning disable S2930
+#pragma warning disable S2930
             fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            #pragma warning restore S2930
+#pragma warning restore S2930
         }
 
         /// <summary>
@@ -121,9 +121,9 @@ namespace Manandre.IO
         /// </exception>
         public FollowingFileStream(string path, int bufferSize, bool useAsync)
         {
-            #pragma warning disable S2930
+#pragma warning disable S2930
             fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, bufferSize, useAsync);
-            #pragma warning restore S2930
+#pragma warning restore S2930
         }
         #endregion
 
@@ -298,8 +298,7 @@ namespace Manandre.IO
             }
             finally
             {
-                if (stream != null)
-                    stream.Close();
+                stream?.Dispose();
             }
 
             //file is not locked
@@ -308,6 +307,7 @@ namespace Manandre.IO
 
         private bool disposed = false;
 
+#if NETSTANDARD2_1
         /// <summary>
         /// Releases the unmanaged resources used by the FollowingFileStream and optionally
         /// releases the managed resources.
@@ -334,7 +334,29 @@ namespace Manandre.IO
                 base.Dispose(disposing);
             }
         }
+#else
+        /// <summary>
+        /// Releases the unmanaged resources used by the FollowingFileStream and optionally
+        /// releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
+        ///</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
 
+            if (disposing)
+            {
+                cts.Cancel();
+                fileStream.Dispose();
+            }
+
+            disposed = true;
+            // Call stream class implementation.
+            base.Dispose(disposing);
+        }
+#endif
         /// <summary>
         /// Clears buffers for this stream and causes any buffered data to be written to the file.
         /// </summary>

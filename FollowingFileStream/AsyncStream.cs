@@ -12,6 +12,7 @@ namespace Manandre.IO
     #pragma warning disable S3881
     public abstract class AsyncStream : Stream
     {
+#if !NETSTANDARD1_3
         /// <summary>
         /// Begins an asynchronous read operation. (Consider using AsyncStream.ReadAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)
         /// instead.)
@@ -132,6 +133,7 @@ namespace Manandre.IO
         {
             ((Task)asyncResult).GetAwaiter().GetResult();
         }
+#endif
 
         /// <summary>
         /// Clears all buffers for this stream and causes
@@ -285,6 +287,7 @@ namespace Manandre.IO
         /// </exception>
         public abstract override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken);
 
+#if NETSTANDARD2_1
         /// <summary>
         /// Asynchronously releases the unmanaged resources used by the FollowingFileStream and optionally
         /// releases the managed resources.
@@ -305,7 +308,19 @@ namespace Manandre.IO
         /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
         ///</param>
         protected sealed override void Dispose(bool disposing) => DisposeAsync(disposing).GetAwaiter().GetResult();
-        
+#else        
+        /// <summary>
+        /// Releases the unmanaged resources used by the FollowingFileStream and optionally
+        /// releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
+        ///</param>
+        protected override void Dispose(bool disposing)
+        {
+            // Call stream class implementation.
+            base.Dispose(disposing);
+        }
+#endif
         /// <summary>
         /// Synchronized version of an async stream
         /// </summary>
@@ -466,6 +481,7 @@ namespace Manandre.IO
 
             private bool disposed = false;
 
+#if NETSTANDARD2_1
             protected override async ValueTask DisposeAsync(bool disposing)
             {
                 if (disposed)
@@ -489,6 +505,32 @@ namespace Manandre.IO
                     await base.DisposeAsync(disposing);
                 }
             }
+#else
+            protected override void Dispose(bool disposing)
+            {
+                if (disposed)
+                    return;
+                
+                try
+                {
+                    // Explicitly pick up a potentially methodimpl'ed Dispose
+                    if (disposing)
+                    {
+                        cts.Cancel();
+                        using (locker.Lock())
+                        {
+                            ((IDisposable)_stream).Dispose();
+                        }
+
+                    }
+                }
+                finally
+                {
+                    disposed = true;
+                    base.Dispose(disposing);
+                }
+            }
+#endif
         }
     }
 
