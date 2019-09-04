@@ -294,8 +294,7 @@ namespace Manandre.IO
             }
             finally
             {
-                if (stream != null)
-                    stream.Close();
+                stream?.Dispose();
             }
 
             //file is not locked
