@@ -13,6 +13,7 @@ namespace Manandre.IO
     /// </summary>
     public abstract class AsyncStream : Stream
     {
+#if !NETSTANDARD1_3
         /// <summary>
         /// Begins an asynchronous read operation. (Consider using AsyncStream.ReadAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)
         /// instead.)
@@ -141,6 +142,7 @@ namespace Manandre.IO
         {
             ApmAsyncFactory.ToEnd(asyncResult);
         }
+#endif
 
         /// <summary>
         /// Clears all buffers for this stream and causes
