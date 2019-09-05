@@ -68,7 +68,7 @@ steps:
 - script: |
     dotnet tool install dotnet-reportgenerator-globaltool --tool-path . 
     ./reportgenerator "-reports:$(Build.SourcesDirectory)/coverage/coverage.opencover.xml" "-targetdir:coverage/Cobertura" "-reporttypes:Cobertura;HTMLInline;HTMLChart"
-  condition: eq( variables['Agent.OS'], 'Linux' )
+  condition: ne( variables['Agent.OS'], 'Windows_NT' )
   displayName: Run Reportgenerator on Linux
  
 - script: |
