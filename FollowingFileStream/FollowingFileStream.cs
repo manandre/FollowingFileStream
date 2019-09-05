@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -243,6 +244,8 @@ namespace Manandre.IO
                 read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken);
             }
 
+            TotalTime = 0;
+
             return read;
         }
 
@@ -257,12 +260,20 @@ namespace Manandre.IO
         /// </returns>
         private async Task<bool> RetryNeededAsync()
         {
-            bool retry = IsFileLockedForWriting();
+            bool retry = true;
+            // File locking for read/write operations is only supported on Windows
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                retry = IsFileLockedForWriting();
+            }
             if (retry)
             {
                 try
                 {
-                    await Task.Delay(MillisecondsRetryTimeout, cts.Token).ConfigureAwait(false);
+                    var duration = MillisecondsRetryTimeout;
+                    await Task.Delay(duration, cts.Token).ConfigureAwait(false);
+                    TotalTime += duration;
+                    retry = ReadTimeout == Timeout.Infinite || TotalTime < ReadTimeout;
                 }
                 catch (TaskCanceledException)
                 {
@@ -271,6 +282,18 @@ namespace Manandre.IO
             }
             return retry;
         }
+
+        private long TotalTime;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public override bool CanTimeout => true;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public override int ReadTimeout { get; set; } = Timeout.Infinite;
 
         /// <summary>
         /// Synchronously checks whether the file is locked for writing
