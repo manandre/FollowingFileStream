@@ -6,8 +6,17 @@
 trigger:
 - master
 
+strategy:
+  matrix:
+    linux:
+      imageName: 'ubuntu-latest'
+    mac:
+      imageName: 'macos-latest'
+    windows:
+      imageName: 'windows-latest'
+
 pool:
-  vmImage: 'windows-latest'
+  vmImage: $(imageName)
 
 variables:
   buildConfiguration: 'Release'
@@ -98,6 +107,7 @@ steps:
     versionEnvVar: 'GitVersion.NuGetVersion'
 
 - task: PublishSymbols@2
+  condition: eq( variables['Agent.OS'], 'Windows_NT' )
   inputs:
     SearchPattern: |
       **/bin/**/FollowingFileStream.pdb
