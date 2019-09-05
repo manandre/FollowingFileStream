@@ -98,6 +98,7 @@ steps:
     versionEnvVar: 'GitVersion.NuGetVersion'
 
 - task: PublishSymbols@2
+  condition: eq( variables['Agent.OS'], 'Windows_NT' )
   inputs:
     SearchPattern: |
       **/bin/**/FollowingFileStream.pdb
