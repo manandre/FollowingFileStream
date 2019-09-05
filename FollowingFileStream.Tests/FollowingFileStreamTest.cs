@@ -161,7 +161,7 @@ namespace Manandre.IO
                 input.Close();
                 //Thread.Sleep(200);
                 //Assert.IsTrue(copy.IsCompletedSuccessfully);
-                Assert.IsTrue(copy.Wait(2*ffs.ReadTimeout));
+                Assert.IsTrue(copy.Wait(3*ffs.ReadTimeout));
             }
             Assert.IsTrue(FileCompare(inputFilePath, outputFilePath));
         }
