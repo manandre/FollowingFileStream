@@ -15,7 +15,7 @@ namespace Manandre.IO
         {
             using (var sw = File.CreateText(inputFilePath))
             {
-                sw.WriteLine("coucou");
+                sw.Write("coucou");
             }
         }
 
@@ -66,6 +66,7 @@ namespace Manandre.IO
                 Assert.IsTrue(ffs.CanRead);
                 Assert.IsFalse(ffs.CanWrite);
                 Assert.IsTrue(ffs.CanSeek);
+                Assert.IsTrue(ffs.CanTimeout);
             }
         }
 
@@ -104,11 +105,11 @@ namespace Manandre.IO
         {
             using (var ffs = new FollowingFileStream(inputFilePath, 4*1096, async))
             {
+                var expected = "coucou";
                 Assert.AreEqual(0, ffs.Position);
-                Assert.AreEqual(8, ffs.Length);
+                Assert.AreEqual(expected.Length, ffs.Length);
 
-                var expected = "coucou" + Environment.NewLine;
-                var bytes = new byte[8];
+                var bytes = new byte[expected.Length];
                 Assert.AreEqual(expected.Length, ffs.Read(bytes, 0, bytes.Length));
                 Assert.AreEqual(expected, System.Text.Encoding.Default.GetString(bytes));
 
@@ -134,6 +135,7 @@ namespace Manandre.IO
             using (var ffs = new FollowingFileStream(inputFilePath, 4*1096, async))
             using (var destination = File.CreateText(outputFilePath))
             {
+                ffs.ReadTimeout = 0;
                 ffs.CopyTo(destination.BaseStream);
             }
             Assert.IsTrue(FileCompare(inputFilePath, outputFilePath));
@@ -148,16 +150,18 @@ namespace Manandre.IO
             using (var ffs = new FollowingFileStream(inputFilePath, 4*1024, async))
             using (var destination = File.CreateText(outputFilePath))
             {
+                ffs.ReadTimeout = 400;
                 destination.AutoFlush = true;
                 var os = destination.BaseStream;
                 var copy = ffs.CopyToAsync(os);
                 Assert.AreEqual(0, os.Length);
-                Thread.Sleep(200);
+                Thread.Sleep(ffs.ReadTimeout/2);
                 Assert.IsFalse(copy.IsCompleted);
                 input.WriteLine("coucou2");
                 input.Close();
-                Thread.Sleep(200);
-                Assert.IsTrue(copy.IsCompletedSuccessfully);
+                //Thread.Sleep(200);
+                //Assert.IsTrue(copy.IsCompletedSuccessfully);
+                Assert.IsTrue(copy.Wait(2*ffs.ReadTimeout));
             }
             Assert.IsTrue(FileCompare(inputFilePath, outputFilePath));
         }
