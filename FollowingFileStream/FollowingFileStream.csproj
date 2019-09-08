@@ -20,7 +20,7 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All"/>
     <PackageReference Include="SourceBrowser" Version="1.0.23" PrivateAssets="All" />
   </ItemGroup>
-  <Target Name="GenerateSourceBrowserWebsite" AfterTargets="PostBuildEvent" Condition=" '$(TargetFramework)' == 'netstandard2.0' And '$(Agent.OS)' == 'Windows_NT' ">
+  <Target Name="GenerateSourceBrowserWebsite" AfterTargets="PostBuildEvent" Condition=" '$(TargetFramework)' == 'netstandard2.0' And '$(OS)' == 'Windows_NT' ">
     <Exec Command="$(PkgSourceBrowser)\tools\HtmlGenerator.exe $(SolutionPath) /out:$(TargetDir)/Index /force" />
   </Target>
 </Project>
