@@ -114,7 +114,8 @@ steps:
 
 - task: PublishBuildArtifacts@1
   displayName: Publish source browser website
+  condition: eq( variables['Agent.OS'], 'Windows_NT' )
   inputs:
-    PathtoPublish: '$(Build.SourcesDirectory)/bin/$(ConfigurationName)/netstandard2.0/Index'
+    PathtoPublish: '$(Build.SourcesDirectory)/bin/$(BuildConfiguration)/netstandard2.0/Index'
     ArtifactName: 'sourcebrowser_website'
     publishLocation: 'Container'
