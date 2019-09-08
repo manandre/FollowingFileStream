@@ -112,10 +112,10 @@ steps:
     ArtifactName: 'drop'
     publishLocation: 'Container'
 
-- task: PublishBuildArtifacts@1
-  displayName: Publish source browser website
-  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+- task: ArchiveFiles@2
   inputs:
-    PathtoPublish: '$(Build.SourcesDirectory)/FollowingFileStream/bin/$(BuildConfiguration)/netstandard2.0/Index'
-    ArtifactName: 'sourcebrowser_website'
-    publishLocation: 'Container'
+    rootFolderOrFile: '$(Build.SourcesDirectory)/FollowingFileStream/bin/$(BuildConfiguration)/netstandard2.0/Index'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/sourcebrowser_website.zip'
+    replaceExistingArchive: true
