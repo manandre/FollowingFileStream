@@ -111,3 +111,10 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'drop'
     publishLocation: 'Container'
+
+- task: PublishBuildArtifacts@1
+  displayName: Publish source browser website
+  inputs:
+    PathtoPublish: '$(Build.SourcesDirectory)/bin/$(ConfigurationName)/netstandard2.0/Index'
+    ArtifactName: 'sourcebrowser_website'
+    publishLocation: 'Container'
