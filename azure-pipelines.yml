@@ -10,7 +10,7 @@ variables:
   buildConfiguration: 'Release'
 
 jobs:
-  - job: Main
+  - job: Build
     strategy:
       matrix:
         linux:
@@ -94,7 +94,7 @@ jobs:
       displayName: Pack
       inputs:
         command: 'pack'
-        packagesToPack: '**/*.csproj'
+        packagesToPack: 'FollowingFileStream/*.csproj'
         nobuild: true
         versioningScheme: 'byEnvVar'
         versionEnvVar: 'GitVersion.NuGetVersion'
