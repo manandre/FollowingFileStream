@@ -114,30 +114,30 @@ jobs:
         ArtifactName: 'drop'
         publishLocation: 'Container'
 
-- job: SourceBrowser
-  displayName: Source Browser generation
-  pool:
-      vmImage: 'windows-latest'
-  steps:
-    - task: DotNetCoreCLI@2
-      displayName: Restore
-      inputs:
-        command: 'restore'
-        projects: '**/*.SourceBrowser.csproj'
-        feedsToUse: 'select'
+  - job: SourceBrowser
+    displayName: Source Browser generation
+    pool:
+        vmImage: 'windows-latest'
+    steps:
+      - task: DotNetCoreCLI@2
+        displayName: Restore
+        inputs:
+          command: 'restore'
+          projects: '**/*.SourceBrowser.csproj'
+          feedsToUse: 'select'
 
-    - task: DotNetCoreCLI@2
-      displayName: Build
-      inputs:
-        command: 'build'
-        projects: '**/*.SourceBrowser.csproj'
-        arguments: '--configuration $(BuildConfiguration)'
+      - task: DotNetCoreCLI@2
+        displayName: Build
+        inputs:
+          command: 'build'
+          projects: '**/*.SourceBrowser.csproj'
+          arguments: '--configuration $(BuildConfiguration)'
 
-    - task: ArchiveFiles@2
-      displayName: Zip source browser website
-      inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)/FollowingFileStream.SourceBrowser/bin/Index'
-        includeRootFolder: false
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/sourcebrowser_website.zip'
-        replaceExistingArchive: true
+      - task: ArchiveFiles@2
+        displayName: Zip source browser website
+        inputs:
+          rootFolderOrFile: '$(Build.SourcesDirectory)/FollowingFileStream.SourceBrowser/bin/Index'
+          includeRootFolder: false
+          archiveType: 'zip'
+          archiveFile: '$(Build.ArtifactStagingDirectory)/sourcebrowser_website.zip'
+          replaceExistingArchive: true
