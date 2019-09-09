@@ -6,6 +6,7 @@ Any read operation will not report a zero result while the file is locked for wr
 
 It is usually compared to the "tail -f" approach.
 
+[Source Browser](https://followingfilestream.azurewebsites.net/#FollowingFileStream/)
 
 [![Build Status](https://dev.azure.com/manandre/manandre/_apis/build/status/manandre.FollowingFileStream?branchName=master)](https://dev.azure.com/manandre/manandre/_build/latest?definitionId=1&branchName=master)
 
