@@ -148,7 +148,7 @@ jobs:
           ArtifactName: 'sourcebrowser_website'
           publishLocation: 'Container'
 
-  - job: api-doc
+  - job: ApiDoc
     displayName: API Documentation generation
     pool:
         vmImage: 'windows-latest'
