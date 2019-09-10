@@ -158,3 +158,37 @@ jobs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)/sourcebrowser_website.zip'
           ArtifactName: 'sourcebrowser_website'
           publishLocation: 'Container'
+
+  - job: ApiDoc
+    displayName: API Documentation generation
+    pool:
+        vmImage: 'windows-latest'
+    steps:
+      - task: DotNetCoreCLI@2
+        displayName: Restore
+        inputs:
+          command: 'restore'
+          projects: '**/*.APIdoc.csproj'
+          feedsToUse: 'select'
+
+      - task: DotNetCoreCLI@2
+        displayName: Build
+        inputs:
+          command: 'build'
+          projects: '**/*.APIdoc.csproj'
+          arguments: '--configuration $(BuildConfiguration)'
+
+      - task: ArchiveFiles@2
+        displayName: Zip API documentation website
+        inputs:
+          rootFolderOrFile: '$(Build.SourcesDirectory)/FollowingFileStream.APIdoc/_site'
+          includeRootFolder: false
+          archiveType: 'zip'
+          archiveFile: '$(Build.ArtifactStagingDirectory)/apidoc_website.zip'
+          replaceExistingArchive: true
+        
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)/apidoc_website.zip'
+          ArtifactName: 'apidoc_website'
+          publishLocation: 'Container'

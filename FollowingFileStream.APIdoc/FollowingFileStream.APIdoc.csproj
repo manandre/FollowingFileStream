@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PreviewOutputFolder>$(MSBuildProjectDirectory)\_site</PreviewOutputFolder>
+    <MetadataOutputFolder>$(MSBuildProjectDirectory)</MetadataOutputFolder>
+    <LogFile>$(MSBuildProjectDirectory)\bin\docfx.log.txt</LogFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="docfx.console" Version="2.45.0" PrivateAssets="All"/>
+  </ItemGroup>
+</Project>
