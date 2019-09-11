@@ -5,7 +5,7 @@
         {
           "src": "../",
           "files": [
-            "FollowingFileStream/**.cs"
+            "FollowingFileStream/**.csproj"
           ],
           "exclude": [
             "**/bin/**",
@@ -15,7 +15,10 @@
       ],
       "dest": "api",
       "disableGitFeatures": false,
-      "disableDefaultFilter": false
+      "disableDefaultFilter": false,
+      "properties": {
+        "TargetFramework": "netstandard2.0"
+      }
     }
   ],
   "build": {
@@ -54,7 +57,10 @@
       }
     ],
     "dest": "_site",
-    "globalMetadataFiles": [],
+    "globalMetadata": {
+      "_appTitle": "FollowingFileStream API Documentation Website",
+      "_enableSearch": true
+    },
     "fileMetadataFiles": [],
     "template": [
       "default"
