@@ -155,7 +155,7 @@ jobs:
     steps:
       - task: DocFxTask@0
         inputs:
-          solution: '**/docfx.json'
+          solution: 'FollowingFileStream.APIdoc/docfx.json'
 
       - task: ArchiveFiles@2
         displayName: Zip API documentation website
