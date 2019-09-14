@@ -189,6 +189,6 @@ jobs:
       - task: PublishBuildArtifacts@1
         displayName: Publish PDF
         inputs:
-          PathtoPublish: '$(Build.SourcesDirectory)/FollowingFileStream.APIdoc/_site_pdf/*.pdf'
+          PathtoPublish: '$(Build.SourcesDirectory)/FollowingFileStream.APIdoc/_site_pdf/FollowingFileStream.APIdoc_pdf.pdf'
           ArtifactName: 'apidoc_pdf'
           publishLocation: 'Container'
