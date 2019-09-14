@@ -156,6 +156,7 @@ jobs:
       - task: ChocolateyCommand@0
         inputs:
           command: 'install'
+          debug: true
           installPackageId: 'wkhtmltopdf'
       
       # First restore to resolve external dependencies
