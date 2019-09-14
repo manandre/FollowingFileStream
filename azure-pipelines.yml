@@ -153,19 +153,9 @@ jobs:
     pool:
         vmImage: 'windows-latest'
     steps:
-      - task: DotNetCoreCLI@2
-        displayName: Restore
+      - task: DocFxTask@0
         inputs:
-          command: 'restore'
-          projects: '**/*.APIdoc.csproj'
-          feedsToUse: 'select'
-
-      - task: DotNetCoreCLI@2
-        displayName: Build
-        inputs:
-          command: 'build'
-          projects: '**/*.APIdoc.csproj'
-          arguments: '--configuration $(BuildConfiguration)'
+          solution: 'FollowingFileStream.APIdoc/docfx.json'
 
       - task: ArchiveFiles@2
         displayName: Zip API documentation website
