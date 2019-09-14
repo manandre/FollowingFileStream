@@ -153,17 +153,9 @@ jobs:
     pool:
         vmImage: 'windows-latest'
     steps:
-      - task: PowerShell@2
-        inputs:
-          targetType: 'inline'
-          script: 'choco list -l'
-
       - task: ChocolateyCommand@0
         inputs:
           command: 'install'
-          debug: true
-          verbose: true
-          trace: true
           installPackageId: 'wkhtmltopdf'
       
       # First restore to resolve external dependencies
@@ -188,7 +180,15 @@ jobs:
           replaceExistingArchive: true
         
       - task: PublishBuildArtifacts@1
+        displayName: Publish Website
         inputs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)/apidoc_website.zip'
           ArtifactName: 'apidoc_website'
+          publishLocation: 'Container'
+
+      - task: PublishBuildArtifacts@1
+        displayName: Publish PDF
+        inputs:
+          PathtoPublish: '$(Build.SourcesDirectory)/FollowingFileStream.APIdoc/_site_pdf/*.pdf'
+          ArtifactName: 'apidoc_pdf'
           publishLocation: 'Container'
