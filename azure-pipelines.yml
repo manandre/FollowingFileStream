@@ -153,6 +153,14 @@ jobs:
     pool:
         vmImage: 'windows-latest'
     steps:
+      # First restore to resolve external dependencies
+      - task: DotNetCoreCLI@2
+        displayName: Restore
+        inputs:
+          command: 'restore'
+          projects: '**/FollowingFileStream.csproj'
+          feedsToUse: 'select'
+
       - task: DocFxTask@0
         inputs:
           solution: 'FollowingFileStream.APIdoc/docfx.json'
