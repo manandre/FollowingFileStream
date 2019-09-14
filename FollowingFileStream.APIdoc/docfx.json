@@ -57,6 +57,9 @@
       }
     ],
     "dest": "_site",
+    "xrefService": [
+      "https://xref.docs.microsoft.com/query?uid={uid}"
+    ],
     "globalMetadata": {
       "_appTitle": "FollowingFileStream API Documentation Website",
       "_enableSearch": true
