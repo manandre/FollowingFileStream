@@ -157,6 +157,7 @@ jobs:
         inputs:
           command: 'install'
           debug: true
+          verbose: true
           installPackageId: 'wkhtmltopdf'
       
       # First restore to resolve external dependencies
