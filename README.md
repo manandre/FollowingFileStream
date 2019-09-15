@@ -6,7 +6,7 @@ Any read operation will not report a zero result while the file is locked for wr
 
 It is usually compared to the "tail -f" approach.
 
-[API Documentation](https://followingfilestream.azurewebsites.net/api-doc)
+[API Documentation](https://followingfilestream.azurewebsites.net/api-doc) [[PDF](https://followingfilestream.azurewebsites.net/api-doc/_site_pdf/FollowingFileStream.APIdoc_pdf.pdf)]
 
 [Source Browser](https://followingfilestream.azurewebsites.net/#FollowingFileStream/)
 
