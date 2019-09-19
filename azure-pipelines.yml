@@ -169,6 +169,17 @@ jobs:
           command: 'install'
           installPackageId: 'wkhtmltopdf'
       
+      - task: UseDotNet@2
+        displayName: 'Use dotnet sdk 2.x'
+        inputs:
+          version: 2.x
+        
+      - task: UseDotNet@2
+        displayName: 'Use dotnet sdk 3.x'
+        inputs:
+          version: 3.x
+          includePreviewVersions: true
+
       # First restore to resolve external dependencies
       - task: DotNetCoreCLI@2
         displayName: Restore
