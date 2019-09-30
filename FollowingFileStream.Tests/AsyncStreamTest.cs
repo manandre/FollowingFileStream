@@ -1,9 +1,11 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Moq.Protected;
 using System;
 using System.IO;
 using System.Linq.Expressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Manandre.IO
 {
@@ -15,35 +17,38 @@ namespace Manandre.IO
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             var expected = 42;
-            sut.Setup(x => x.ReadAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            sut.Protected().Setup<Task<int>>("DoReadAsync", ItExpr.IsAny<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), ItExpr.IsAny<bool>())
             .ReturnsAsync(expected);
-            var read = sut.Object.Read(null, 0, 0);
+            var read = sut.Object.Read(null, 0 , 0);
+            sut.Protected().Verify("DoReadAsync", Times.Once(), ItExpr.IsAny<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), true);
             Assert.AreEqual(expected, read);
 
+#if !NETSTANDARD1_3
             read = sut.Object.EndRead(sut.Object.BeginRead(null, 0, 0, null, null));
+            sut.Protected().Verify("DoReadAsync", Times.Once(), ItExpr.IsAny<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), false);
             Assert.AreEqual(expected, read);
+#endif
         }
 
         [TestMethod]
         public void AS_Write()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
-            sut.Setup(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .Verifiable();
-            sut.Object.Write(null, 0, 0);
-            sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
+            sut.Object.Write(null, 0 , 0);
+            sut.Protected().Verify("DoWriteAsync", Times.Once(), ItExpr.IsAny<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), true);
 
+#if !NETSTANDARD1_3
             sut.Object.EndWrite(sut.Object.BeginWrite(null, 0, 0, null, null));
-            sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+            sut.Protected().Verify("DoWriteAsync", Times.Once(), ItExpr.IsAny<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), false);
+#endif
         }
 
         [TestMethod]
         public void AS_Flush()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
-            sut.Setup(x => x.FlushAsync(It.IsAny<CancellationToken>())).Verifiable();
             sut.Object.Flush();
-            sut.Verify(x => x.FlushAsync(It.IsAny<CancellationToken>()), Times.Once);
+            sut.Protected().Verify<Task>("DoFlushAsync", Times.Once(), ItExpr.IsAny<CancellationToken>(), true);
         }
 
         [TestMethod]
@@ -59,7 +64,7 @@ namespace Manandre.IO
         {
             Assert.ThrowsException<ArgumentNullException>(() => AsyncStream.Synchronized(null));
             var sut = new Mock<AsyncStream>() { CallBase = true };
-            var synchronized = AsyncStream.Synchronized(sut.Object);
+            var synchronized = sut.Object.Synchronized();
             Assert.IsNotNull(synchronized);
             Assert.AreSame(synchronized, AsyncStream.Synchronized(synchronized));
 
@@ -120,6 +125,11 @@ namespace Manandre.IO
             Assert.AreEqual(expected_offset, result_offset);
             Assert.AreEqual(expected_origin, result_origin);
 
+            // Length
+            expected2 = 42;
+            sut.Setup(x => x.Length).Returns(expected2);
+            Assert.AreEqual(expected2, synchronized.Length);
+
             // SetLength
             var expected_length = 42;
             var result_length = 0L;
@@ -129,7 +139,7 @@ namespace Manandre.IO
             Assert.AreEqual(expected_length, result_length);
 
             // Read
-            sut.Setup(x => x.ReadAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            sut.Protected().Setup<Task<int>>("DoReadAsync", ItExpr.IsNull<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), ItExpr.IsAny<bool>())
             .ReturnsAsync(expected2);
             var read = synchronized.ReadAsync(null, 0, 0).Result;
             Assert.AreEqual(expected2, read);
@@ -137,26 +147,26 @@ namespace Manandre.IO
             Assert.AreEqual(expected2, read);
             read = synchronized.EndRead(synchronized.BeginRead(null, 0, 0, null, null));
             Assert.AreEqual(expected2, read);
+            Assert.ThrowsExceptionAsync<OperationCanceledException>(() => synchronized.ReadAsync(null, 0, 0, new CancellationToken(true)));
 
             // Write
-            sut.Setup(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .Verifiable();
             synchronized.WriteAsync(null, 0, 0).Wait();
-            sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
+            sut.Protected().Verify("DoWriteAsync", Times.Once(), ItExpr.IsNull<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), false);
             synchronized.Write(null, 0, 0);
-            sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+            sut.Protected().Verify("DoWriteAsync", Times.Once(), ItExpr.IsNull<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), true);
             synchronized.EndWrite(synchronized.BeginWrite(null, 0, 0, null, null));
-            sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
+            sut.Protected().Verify("DoWriteAsync", Times.Exactly(2), ItExpr.IsNull<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), false);
             Assert.ThrowsExceptionAsync<OperationCanceledException>(() => synchronized.WriteAsync(null, 0, 0, new CancellationToken(true)));
 
-            // Async
-            sut.Setup(x => x.FlushAsync(It.IsAny<CancellationToken>())).Verifiable();
+            // Flush
             synchronized.FlushAsync().Wait();
-            sut.Verify(x => x.FlushAsync(It.IsAny<CancellationToken>()), Times.Once);
+            sut.Protected().Verify<Task>("DoFlushAsync", Times.Once(), ItExpr.IsAny<CancellationToken>(), false);
             synchronized.Flush();
-            sut.Verify(x => x.FlushAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
-
+            sut.Protected().Verify<Task>("DoFlushAsync", Times.Once(), ItExpr.IsAny<CancellationToken>(), true);
             Assert.ThrowsExceptionAsync<OperationCanceledException>(() => synchronized.FlushAsync(new CancellationToken(true)));
+
+            // Dispose
+            synchronized.Dispose();
         }
     }
 }
