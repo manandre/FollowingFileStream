@@ -203,6 +203,7 @@ namespace Manandre.IO
         /// <param name="offset">The byte offset in buffer at which to begin writing data from the stream.</param>
         /// <param name="count">The maximum number of bytes to read.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <param name="sync">If enabled, returns an already-completed task</param>
         /// <returns>
         /// A task that represents the asynchronous read operation. The value of the TResult
         /// parameter contains the total number of bytes read into the buffer. The result
@@ -228,20 +229,20 @@ namespace Manandre.IO
         /// <exception cref="System.ObjectDisposedException">
         /// Methods were called after the stream was closed.
         /// </exception>
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        protected override async Task<int> DoReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync)
         {
             int read = 0;
             do
             {
-                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken);
+                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
-            while (read == 0 && await RetryNeededAsync());
+            while (read == 0 && await RetryNeededAsync().ConfigureAwait(false));
 
             // In case the filestream has been written and closed between the last read operation
             // and the IsFileLockedForWriting() check
             if (read == 0)
             {
-                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken);
+                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
 
             TotalTime = 0;
@@ -352,7 +353,7 @@ namespace Manandre.IO
         /// Clears buffers for this stream and causes any buffered data to be written to the file.
         /// </summary>
         /// <exception cref="System.NotSupportedException">Not supported</exception>
-        public override Task FlushAsync(CancellationToken cancellationToken)
+        protected override Task DoFlushAsync(CancellationToken cancellationToken, bool sync)
         {
             throw new NotSupportedException();
         }
@@ -395,7 +396,7 @@ namespace Manandre.IO
         /// Asynchronously writes a block of bytes to the file stream.
         /// </summary>
         /// <exception cref="System.NotSupportedException">Not supported</exception>
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        protected override Task DoWriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync)
         {
             throw new NotSupportedException();
         }
