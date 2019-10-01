@@ -63,7 +63,9 @@ namespace Manandre.IO
         /// </exception>
         public FollowingFileStream(string path)
         {
+#pragma warning disable S2930
             fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+#pragma warning restore S2930
         }
 
         /// <summary>
@@ -120,7 +122,9 @@ namespace Manandre.IO
         /// </exception>
         public FollowingFileStream(string path, int bufferSize, bool useAsync)
         {
+#pragma warning disable S2930
             fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, bufferSize, useAsync);
+#pragma warning restore S2930
         }
         #endregion
 
@@ -325,8 +329,36 @@ namespace Manandre.IO
             return false;
         }
 
-        bool disposed = false;
+        private bool disposed = false;
 
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Releases the unmanaged resources used by the FollowingFileStream and optionally
+        /// releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
+        ///</param>
+        protected override async ValueTask DisposeAsync(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            try
+            {
+                if (disposing)
+                {
+                    cts.Cancel();
+                    await fileStream.DisposeAsync();
+                }
+            }
+            finally
+            {
+                disposed = true;
+                // Call stream class implementation.
+                base.Dispose(disposing);
+            }
+        }
+#else
         /// <summary>
         /// Releases the unmanaged resources used by the FollowingFileStream and optionally
         /// releases the managed resources.
@@ -348,7 +380,7 @@ namespace Manandre.IO
             // Call stream class implementation.
             base.Dispose(disposing);
         }
-
+#endif
         /// <summary>
         /// Clears buffers for this stream and causes any buffered data to be written to the file.
         /// </summary>
