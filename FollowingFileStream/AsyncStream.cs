@@ -9,6 +9,7 @@ namespace Manandre.IO
     /// <summary>
     /// 
     /// </summary>
+    #pragma warning disable S3881
     public abstract class AsyncStream : Stream
     {
 #if !NETSTANDARD1_3
@@ -286,8 +287,28 @@ namespace Manandre.IO
         /// </exception>
         public abstract override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken);
 
-        private bool disposed = false;
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Asynchronously releases the unmanaged resources used by the FollowingFileStream and optionally
+        /// releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
+        ///</param>
+        protected virtual ValueTask DisposeAsync(bool disposing) => default;
 
+        /// <summary>
+        /// Asynchronously releases all resources used by the AsyncStream.
+        /// </summary>
+        public sealed override ValueTask DisposeAsync() => DisposeAsync(true);
+
+        /// <summary>
+        /// Releases the unmanaged resources used by the FollowingFileStream and optionally
+        /// releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
+        ///</param>
+        protected sealed override void Dispose(bool disposing) => DisposeAsync(disposing).GetAwaiter().GetResult();
+#else        
         /// <summary>
         /// Releases the unmanaged resources used by the FollowingFileStream and optionally
         /// releases the managed resources.
@@ -296,14 +317,10 @@ namespace Manandre.IO
         ///</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposed)
-                return;
-
-            disposed = true;
             // Call stream class implementation.
             base.Dispose(disposing);
         }
-
+#endif
         /// <summary>
         /// Synchronized version of an async stream
         /// </summary>
@@ -400,26 +417,6 @@ namespace Manandre.IO
                 }
             }
 
-            protected override void Dispose(bool disposing)
-            {
-                try
-                {
-                    // Explicitly pick up a potentially methodimpl'ed Dispose
-                    if (disposing)
-                    {
-                        cts.Cancel();
-                        using (locker.Lock())
-                        {
-                            ((IDisposable)_stream).Dispose();
-                        }
-                    }
-                }
-                finally
-                {
-                    base.Dispose(disposing);
-                }
-            }
-
             public override long Seek(long offset, SeekOrigin origin)
             {
                 using (locker.Lock(cts.Token))
@@ -481,8 +478,63 @@ namespace Manandre.IO
                     cancellationToken.ThrowIfCancellationRequested();
                 }
             }
+
+            private bool disposed = false;
+
+#if NETSTANDARD2_1
+            protected override async ValueTask DisposeAsync(bool disposing)
+            {
+                if (disposed)
+                    return;
+                
+                try
+                {
+                    // Explicitly pick up a potentially methodimpl'ed DisposeAsync
+                    if (disposing)
+                    {
+                        cts.Cancel();
+                        using (await locker.LockAsync())
+                        {
+                            await ((IAsyncDisposable)_stream).DisposeAsync();
+                        }
+                    }
+                }
+                finally
+                {
+                    disposed = true;
+                    await base.DisposeAsync(disposing);
+                }
+            }
+#else
+            protected override void Dispose(bool disposing)
+            {
+                if (disposed)
+                    return;
+                
+                try
+                {
+                    // Explicitly pick up a potentially methodimpl'ed Dispose
+                    if (disposing)
+                    {
+                        cts.Cancel();
+                        using (locker.Lock())
+                        {
+                            ((IDisposable)_stream).Dispose();
+                        }
+
+                    }
+                }
+                finally
+                {
+                    disposed = true;
+                    base.Dispose(disposing);
+                }
+            }
+#endif
         }
     }
+
+    #pragma warning restore S3881
 
     /// <summary>
     /// AsyncStream class extensions
