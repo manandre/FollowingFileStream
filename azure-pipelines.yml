@@ -45,7 +45,6 @@ jobs:
       displayName: 'Use dotnet sdk 3.x'
       inputs:
         version: 3.x
-        includePreviewVersions: true
 
     - task: DotNetCoreCLI@2
       displayName: Restore
@@ -178,7 +177,6 @@ jobs:
         displayName: 'Use dotnet sdk 3.x'
         inputs:
           version: 3.x
-          includePreviewVersions: true
 
       # First restore to resolve external dependencies
       - task: DotNetCoreCLI@2
