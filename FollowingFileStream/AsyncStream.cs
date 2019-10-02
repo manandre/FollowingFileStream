@@ -11,7 +11,7 @@ namespace Manandre.IO
     /// <summary>
     /// 
     /// </summary>
-    #pragma warning disable S3881
+#pragma warning disable S3881
     public abstract class AsyncStream : Stream
     {
 #if !NETSTANDARD1_3
@@ -442,50 +442,56 @@ namespace Manandre.IO
             public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             {
                 var read = 0;
-                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
-                try
+                using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token))
                 {
-                    using (await locker.LockAsync(linkedCts.Token))
+                    try
                     {
-                        read = await _stream.ReadAsync(buffer, offset, count, linkedCts.Token);
+                        using (await locker.LockAsync(linkedCts.Token))
+                        {
+                            read = await _stream.ReadAsync(buffer, offset, count, linkedCts.Token).ConfigureAwait(false);
+                        }
                     }
-                }
-                catch (OperationCanceledException)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    catch (OperationCanceledException)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
                 }
                 return read;
             }
 
             public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             {
-                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
-                try
+                using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token))
                 {
-                    using (await locker.LockAsync(linkedCts.Token))
+                    try
                     {
-                        await _stream.WriteAsync(buffer, offset, count, linkedCts.Token);
+                        using (await locker.LockAsync(linkedCts.Token))
+                        {
+                            await _stream.WriteAsync(buffer, offset, count, linkedCts.Token).ConfigureAwait(false);
+                        }
                     }
-                }
-                catch (OperationCanceledException)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    catch (OperationCanceledException)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
                 }
             }
 
             public override async Task FlushAsync(CancellationToken cancellationToken)
             {
-                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
-                try
+                using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token))
                 {
-                    using (await locker.LockAsync(linkedCts.Token))
+                    try
                     {
-                        await _stream.FlushAsync(linkedCts.Token);
+                        using (await locker.LockAsync(linkedCts.Token))
+                        {
+                            await _stream.FlushAsync(linkedCts.Token).ConfigureAwait(false);
+                        }
                     }
-                }
-                catch (OperationCanceledException)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    catch (OperationCanceledException)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
                 }
             }
 
@@ -496,7 +502,7 @@ namespace Manandre.IO
             {
                 if (disposed)
                     return;
-                
+
                 try
                 {
                     // Explicitly pick up a potentially methodimpl'ed DisposeAsync
@@ -507,6 +513,7 @@ namespace Manandre.IO
                         {
                             await ((IAsyncDisposable)_stream).DisposeAsync();
                         }
+                        cts.Dispose();
                     }
                 }
                 finally
@@ -531,6 +538,7 @@ namespace Manandre.IO
                         {
                             ((IDisposable)_stream).Dispose();
                         }
+                        cts.Dispose();
 
                     }
                 }
@@ -544,7 +552,7 @@ namespace Manandre.IO
         }
     }
 
-    #pragma warning restore S3881
+#pragma warning restore S3881
 
     /// <summary>
     /// AsyncStream class extensions

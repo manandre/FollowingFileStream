@@ -237,15 +237,15 @@ namespace Manandre.IO
             int read = 0;
             do
             {
-                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken);
+                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
-            while (read == 0 && await RetryNeededAsync());
+            while (read == 0 && await RetryNeededAsync().ConfigureAwait(false));
 
             // In case the filestream has been written and closed between the last read operation
             // and the IsFileLockedForWriting() check
             if (read == 0)
             {
-                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken);
+                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
 
             TotalTime = 0;
@@ -348,6 +348,7 @@ namespace Manandre.IO
                 {
                     cts.Cancel();
                     await fileStream.DisposeAsync();
+                    cts.Dispose();
                 }
             }
             finally
@@ -373,6 +374,7 @@ namespace Manandre.IO
             {
                 cts.Cancel();
                 fileStream.Dispose();
+                cts.Dispose();
             }
 
             disposed = true;

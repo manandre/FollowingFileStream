@@ -9,11 +9,10 @@ namespace Manandre.IO
         private const string InputPath = "source.txt";
         private const string OutputPath = "destination.txt";
 
-        static async Task Main(string[] args)
+        static async Task Main()
         {
-            Console.WriteLine("Hello World!");
-            var input = WriteInput();
-            await CopyToOutput();
+            var input = WriteInput().ConfigureAwait(false);
+            await CopyToOutput().ConfigureAwait(false);
             await input;
         }
 
@@ -22,7 +21,7 @@ namespace Manandre.IO
             using (var sw = new StreamWriter(new FileStream(InputPath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             using (var sr = new StreamReader(Console.OpenStandardInput()))
             {
-                await sr.CopyToAsync(sw, stopOn:"quit");
+                await sr.CopyToAsync(sw, stopOn:"quit").ConfigureAwait(false);
             }
         }
         private static async Task CopyToOutput()
@@ -30,12 +29,12 @@ namespace Manandre.IO
             using (var source = new FollowingFileStream(InputPath))
             using (var destination = new FileStream(OutputPath, FileMode.Create, FileAccess.Write, FileShare.Read))
             {
-                await source.CopyToAsync(destination);
+                await source.CopyToAsync(destination).ConfigureAwait(false);
             }
         }
     }
 
-    static public class TextReaderExtensions
+    static class TextReaderExtensions
     {
         public static async Task CopyToAsync(this TextReader reader, TextWriter writer, string stopOn)
         {
