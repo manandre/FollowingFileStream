@@ -1,8 +1,10 @@
-using Manandre.Threading;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Nito.AsyncEx;
+using Nito.AsyncEx.Interop;
+using Nito.AsyncEx.Synchronous;
 
 namespace Manandre.IO
 {
@@ -90,7 +92,7 @@ namespace Manandre.IO
         /// </exception>
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         => DoReadAsync(buffer, offset, count, cancellationToken, sync: false);
-
+        
         /// <summary>
         /// Reads a block of bytes from the stream and writes the data in a given buffer.
         /// </summary>
@@ -122,7 +124,7 @@ namespace Manandre.IO
         /// Methods were called after the stream was closed.
         /// </exception>
         public override int Read(byte[] buffer, int offset, int count)
-        => DoReadAsync(buffer, offset, count, CancellationToken.None, sync: true).GetAwaiter().GetResult();
+        => DoReadAsync(buffer, offset, count, CancellationToken.None, sync: true).WaitAndUnwrapException();
 
         /// <summary>
         /// Asynchronously writes a sequence of bytes to the current stream, advances the
@@ -213,7 +215,7 @@ namespace Manandre.IO
         /// Methods were called after the stream was closed.
         /// </exception>
         public override void Write(byte[] buffer, int offset, int count)
-        => DoWriteAsync(buffer, offset, count, CancellationToken.None, sync: true).GetAwaiter().GetResult();
+        => DoWriteAsync(buffer, offset, count, CancellationToken.None, sync: true).WaitAndUnwrapException();
 
         /// <summary>
         /// Asynchronously clears all buffers for this stream, causes any buffered data to
@@ -243,7 +245,7 @@ namespace Manandre.IO
         /// The stream is closed or an internal error has occurred.
         /// </exception>
         public override void Flush()
-        => DoFlushAsync(CancellationToken.None, sync: true).GetAwaiter().GetResult();
+        => DoFlushAsync(CancellationToken.None, sync: true).WaitAndUnwrapException();
 
 #if !NETSTANDARD1_3
 
@@ -277,7 +279,11 @@ namespace Manandre.IO
         /// An asynchronous read was attempted past the end of the file.
         /// </exception>
         public sealed override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-        => ReadAsync(buffer, offset, count, CancellationToken.None).AsApm(callback, state);
+        =>  ApmAsyncFactory.ToBegin(
+                ReadAsync(buffer, offset, count, CancellationToken.None),
+                callback,
+                state
+            );
 
         /// <summary>
         /// Begins an asynchronous write operation. (Consider using AsyncStream.WriteAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)
@@ -309,7 +315,11 @@ namespace Manandre.IO
         /// An asynchronous write was attempted past the end of the file.
         /// </exception>
         public sealed override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-        => WriteAsync(buffer, offset, count, CancellationToken.None).AsApm(callback,state);
+        =>  ApmAsyncFactory.ToBegin(
+                WriteAsync(buffer, offset, count, CancellationToken.None),
+                callback,
+                state
+            );
 
         /// <summary>
         /// Waits for the pending asynchronous read operation to complete. (Consider using
@@ -336,7 +346,7 @@ namespace Manandre.IO
         /// The stream is closed or an internal error has occurred.
         /// </exception>
         public sealed override int EndRead(IAsyncResult asyncResult)
-        => ((Task<int>)asyncResult).GetAwaiter().GetResult();
+        =>  ApmAsyncFactory.ToEnd<int>(asyncResult);
 
         /// <summary>
         /// Waits for the pending asynchronous write operation to complete. (Consider using
@@ -358,8 +368,7 @@ namespace Manandre.IO
         /// The stream is closed or an internal error has occurred.
         /// </exception>
         public sealed override void EndWrite(IAsyncResult asyncResult)
-        => ((Task)asyncResult).GetAwaiter().GetResult();
-
+        => ApmAsyncFactory.ToEnd(asyncResult);
 #endif
 
 #if NETSTANDARD2_1
@@ -375,7 +384,7 @@ namespace Manandre.IO
         /// Asynchronously releases all resources used by the AsyncStream.
         /// </summary>
         public sealed override ValueTask DisposeAsync() => DisposeAsync(true);
-
+        
         /// <summary>
         /// Releases the unmanaged resources used by the FollowingFileStream and optionally
         /// releases the managed resources.
