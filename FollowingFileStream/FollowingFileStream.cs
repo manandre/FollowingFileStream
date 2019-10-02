@@ -422,7 +422,6 @@ namespace Manandre.IO
             throw new NotSupportedException();
         }
 
-
         /// <summary>
         /// Asynchronously writes a block of bytes to the file stream.
         /// </summary>
