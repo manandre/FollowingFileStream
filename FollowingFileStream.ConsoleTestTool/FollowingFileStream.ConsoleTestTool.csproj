@@ -7,7 +7,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp3.0;netcoreapp2.2</TargetFrameworks>
-    <LangVersion>7.1</LangVersion>
+    <LangVersion>8.0</LangVersion>
     <IsPackable>false</IsPackable>
     <noWarn>SA0001</noWarn>
   </PropertyGroup>

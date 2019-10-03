@@ -365,12 +365,7 @@ namespace Manandre.IO
 
             public AsyncSafeStream(AsyncStream stream)
             {
-                if (stream == null)
-                {
-                    throw new ArgumentNullException(nameof(stream));
-                }
-
-                this.asyncStream = stream;
+                this.asyncStream = stream ?? throw new ArgumentNullException(nameof(stream));
             }
 
             public override bool CanRead => this.asyncStream.CanRead;
@@ -476,37 +471,33 @@ namespace Manandre.IO
 
             public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             {
-                using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this.cts.Token))
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this.cts.Token);
+                try
                 {
-                    try
+                    using (await this.locker.LockAsync(linkedCts.Token))
                     {
-                        using (await this.locker.LockAsync(linkedCts.Token))
-                        {
-                            await this.asyncStream.WriteAsync(buffer, offset, count, linkedCts.Token).ConfigureAwait(false);
-                        }
+                        await this.asyncStream.WriteAsync(buffer, offset, count, linkedCts.Token).ConfigureAwait(false);
                     }
-                    catch (OperationCanceledException)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
             }
 
             public override async Task FlushAsync(CancellationToken cancellationToken)
             {
-                using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this.cts.Token))
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this.cts.Token);
+                try
                 {
-                    try
+                    using (await this.locker.LockAsync(linkedCts.Token))
                     {
-                        using (await this.locker.LockAsync(linkedCts.Token))
-                        {
-                            await this.asyncStream.FlushAsync(linkedCts.Token).ConfigureAwait(false);
-                        }
+                        await this.asyncStream.FlushAsync(linkedCts.Token).ConfigureAwait(false);
                     }
-                    catch (OperationCanceledException)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
             }
 

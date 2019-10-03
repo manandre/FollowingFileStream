@@ -260,7 +260,7 @@ namespace Manandre.IO
         /// </exception>
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            int read = 0;
+            int read;
             do
             {
                 read = await this.fileStream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);

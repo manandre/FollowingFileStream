@@ -14,9 +14,15 @@ namespace Manandre.IO
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Moq;
 
+    /// <summary>
+    /// Test class for AsyncStream.
+    /// </summary>
     [TestClass]
     public class AsyncStreamTest
     {
+        /// <summary>
+        /// Test AsyncStream read operations.
+        /// </summary>
         [TestMethod]
         public void ASRead()
         {
@@ -31,6 +37,9 @@ namespace Manandre.IO
             Assert.AreEqual(expected, read);
         }
 
+        /// <summary>
+        /// Test AsyncStream write operations.
+        /// </summary>
         [TestMethod]
         public void ASWrite()
         {
@@ -44,6 +53,9 @@ namespace Manandre.IO
             sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
+        /// <summary>
+        /// Test AsyncStream flush operations.
+        /// </summary>
         [TestMethod]
         public void ASFlush()
         {
@@ -53,6 +65,9 @@ namespace Manandre.IO
             sut.Verify(x => x.FlushAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
+        /// <summary>
+        /// Test AsyncStream dispose operations.
+        /// </summary>
         [TestMethod]
         public void ASDispose()
         {
@@ -61,6 +76,9 @@ namespace Manandre.IO
             sut.Object.Dispose();
         }
 
+        /// <summary>
+        /// Test AsyncStream synchronized operations.
+        /// </summary>
         [TestMethod]
         public void ASSynchronized()
         {
