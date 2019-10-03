@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.0;netcoreapp2.2</TargetFrameworks>
     <IsPackable>false</IsPackable>
+    <noWarn>SA0001</noWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="coverlet.msbuild" Version="2.6.3">
@@ -12,8 +13,16 @@
     <PackageReference Include="MSTest.TestAdapter" Version="1.4.0"/>
     <PackageReference Include="MSTest.TestFramework" Version="1.4.0"/>
     <PackageReference Include="Moq" Version="4.12.0"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.5" PrivateAssets="All"/>
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All"/>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FollowingFileStream\FollowingFileStream.csproj"/>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../LICENSE"/>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\stylecop.json">
+      <Link>stylecop.json</Link> 
+    </AdditionalFiles>
   </ItemGroup>
 </Project>

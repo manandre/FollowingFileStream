@@ -1,17 +1,24 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
-using System;
-using System.IO;
-using System.Linq.Expressions;
-using System.Threading;
+// --------------------------------------------------------------------------------------------------
+// <copyright file="AsyncStreamTest.cs" company="Manandre">
+// Copyright (c) Manandre. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------
 
 namespace Manandre.IO
 {
+    using System;
+    using System.IO;
+    using System.Linq.Expressions;
+    using System.Threading;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Moq;
+
     [TestClass]
     public class AsyncStreamTest
     {
         [TestMethod]
-        public void AS_Read()
+        public void ASRead()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             var expected = 42;
@@ -25,7 +32,7 @@ namespace Manandre.IO
         }
 
         [TestMethod]
-        public void AS_Write()
+        public void ASWrite()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             sut.Setup(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
@@ -38,7 +45,7 @@ namespace Manandre.IO
         }
 
         [TestMethod]
-        public void AS_Flush()
+        public void ASFlush()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             sut.Setup(x => x.FlushAsync(It.IsAny<CancellationToken>())).Verifiable();
@@ -47,7 +54,7 @@ namespace Manandre.IO
         }
 
         [TestMethod]
-        public void AS_Dispose()
+        public void ASDispose()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             sut.Object.Dispose();
@@ -55,7 +62,7 @@ namespace Manandre.IO
         }
 
         [TestMethod]
-        public void AS_Synchronized()
+        public void ASSynchronized()
         {
             Assert.ThrowsException<ArgumentNullException>(() => AsyncStream.Synchronized(null));
             var sut = new Mock<AsyncStream>() { CallBase = true };
@@ -69,7 +76,7 @@ namespace Manandre.IO
                 x => x.CanRead,
                 x => x.CanWrite,
                 x => x.CanSeek,
-                x => x.CanTimeout
+                x => x.CanTimeout,
             };
             foreach (var func in funcs)
             {
