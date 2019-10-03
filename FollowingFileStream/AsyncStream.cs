@@ -1,60 +1,50 @@
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Nito.AsyncEx;
-using Nito.AsyncEx.Interop;
-using Nito.AsyncEx.Synchronous;
+// --------------------------------------------------------------------------------------------------
+// <copyright file="AsyncStream.cs" company="Manandre">
+// Copyright (c) Manandre. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------
 
 namespace Manandre.IO
 {
+    using System;
+    using System.IO;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Nito.AsyncEx;
+    using Nito.AsyncEx.Interop;
+    using Nito.AsyncEx.Synchronous;
+
     /// <summary>
-    /// Provides an asynchronous version of the System.IO.Stream class. 
+    /// Provides an asynchronous version of the System.IO.Stream class.
     /// This is an abstract class.
     /// </summary>
     /// <remarks>
     /// It can be used to expose a System.IO.Stream class
-    /// by implementing only the asynchronous operations: DoReadAsync, DoWriteAsync and DoFlushAsync 
+    /// by implementing only the asynchronous operations: DoReadAsync, DoWriteAsync and DoFlushAsync.
     /// </remarks>
-    #pragma warning disable S3881
+#pragma warning disable S3881
     public abstract class AsyncStream : Stream
     {
         /// <summary>
-        /// Asynchronously reads a sequence of bytes from the current stream, advances the
-        /// position within the stream by the number of bytes read, and monitors cancellation
-        /// requests. 
+        /// Synchronized version of an async stream.
         /// </summary>
-        /// <param name="buffer">The buffer to write the data into.</param>
-        /// <param name="offset">The byte offset in buffer at which to begin writing data from the stream.</param>
-        /// <param name="count">The maximum number of bytes to read.</param>
-        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
-        /// <param name="sync">If enabled, returns an already-completed task</param>
-        /// <returns>
-        /// A task that represents the asynchronous read operation. The value of the TResult
-        /// parameter contains the total number of bytes read into the buffer. The result
-        /// value can be less than the number of bytes requested if the number of bytes currently
-        /// available is less than the requested number, or it can be 0 (zero) if the end
-        /// of the stream has been reached.
-        /// </returns>
-        /// <exception cref="System.ArgumentNullException">
-        /// buffer is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// offset and count describe an invalid range in array.
-        /// </exception>
-        /// <exception cref="System.NotSupportedException">
-        /// FollowingFileStream.CanRead for this stream is false.
-        /// </exception>
-        /// <exception cref="System.InvalidOperationException">
-        /// The stream is currently in use by a previous read operation.
-        /// </exception>
-        /// <exception cref="System.ArgumentOutOfRangeException">
-        /// offset or count is negative.
-        /// </exception>
-        /// <exception cref="System.ObjectDisposedException">
-        /// Methods were called after the stream was closed.
-        /// </exception>
-        protected abstract Task<int> DoReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync);
+        /// <param name="stream">Stream to synchronize.</param>
+        /// <returns>synchronized version of the given stream.</returns>
+        public static AsyncStream Synchronized(AsyncStream stream)
+        {
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream));
+            }
+
+            if (stream is AsyncSafeStream)
+            {
+                return stream;
+            }
+
+            return new AsyncSafeStream(stream);
+        }
 
         /// <summary>
         /// Asynchronously reads a sequence of bytes from the current stream, advances the
@@ -91,8 +81,8 @@ namespace Manandre.IO
         /// Methods were called after the stream was closed.
         /// </exception>
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        => DoReadAsync(buffer, offset, count, cancellationToken, sync: false);
-        
+        => this.DoReadAsync(buffer, offset, count, cancellationToken, sync: false);
+
         /// <summary>
         /// Reads a block of bytes from the stream and writes the data in a given buffer.
         /// </summary>
@@ -124,39 +114,7 @@ namespace Manandre.IO
         /// Methods were called after the stream was closed.
         /// </exception>
         public override int Read(byte[] buffer, int offset, int count)
-        => DoReadAsync(buffer, offset, count, CancellationToken.None, sync: true).WaitAndUnwrapException();
-
-        /// <summary>
-        /// Asynchronously writes a sequence of bytes to the current stream, advances the
-        /// current position within this stream by the number of bytes written, and monitors
-        /// cancellation requests.
-        /// </summary>
-        /// <param name="buffer">An array of bytes. This method copies count bytes from buffer to the current stream.</param>
-        /// <param name="offset">The zero-based byte offset in buffer at which to begin copying bytes to the current stream.</param>
-        /// <param name="count">The number of bytes to be written to the current stream.</param>
-        /// <param name="cancellationToken">The token to monitor for cancellation requests.
-        /// The default value is System.Threading.CancellationToken.None.</param>
-        /// <param name="sync">If enabled, returns an already-completed task</param>
-        /// <returns>A task that represents the asynchronous write operation.</returns>
-        /// <exception cref="System.ArgumentNullException">
-        /// buffer is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// offset and count describe an invalid range in array.
-        /// </exception>
-        /// <exception cref="System.NotSupportedException">
-        /// AsyncStream.CanWrite for this stream is false.
-        /// </exception>
-        /// <exception cref="System.ArgumentOutOfRangeException">
-        /// offset or count is negative.
-        /// </exception>
-        /// <exception cref="System.ObjectDisposedException">
-        /// Methods were called after the stream was closed.
-        /// </exception>
-        /// <exception cref="System.InvalidOperationException">
-        /// The stream is currently in use by a previous write operation.
-        /// </exception>
-        protected abstract Task DoWriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync);
+        => this.DoReadAsync(buffer, offset, count, CancellationToken.None, sync: true).WaitAndUnwrapException();
 
         /// <summary>
         /// Asynchronously writes a sequence of bytes to the current stream, advances the
@@ -187,7 +145,7 @@ namespace Manandre.IO
         /// The stream is currently in use by a previous write operation.
         /// </exception>
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        => DoWriteAsync(buffer, offset, count, cancellationToken, sync: false);
+        => this.DoWriteAsync(buffer, offset, count, cancellationToken, sync: false);
 
         /// <summary>
         /// Writes a sequence of bytes to the current stream and advances the current position within this stream
@@ -215,17 +173,7 @@ namespace Manandre.IO
         /// Methods were called after the stream was closed.
         /// </exception>
         public override void Write(byte[] buffer, int offset, int count)
-        => DoWriteAsync(buffer, offset, count, CancellationToken.None, sync: true).WaitAndUnwrapException();
-
-        /// <summary>
-        /// Asynchronously clears all buffers for this stream, causes any buffered data to
-        /// be written to the underlying device, and monitors cancellation requests.
-        /// </summary>
-        /// <param name="cancellationToken">The token to monitor for cancellation requests.
-        /// The default value is System.Threading.CancellationToken.None.</param>
-        /// <param name="sync">If enabled, returns an already-completed task</param>
-        /// <returns>A task that represents the asynchronous flush operation.</returns>
-        protected abstract Task DoFlushAsync(CancellationToken cancellationToken, bool sync);
+        => this.DoWriteAsync(buffer, offset, count, CancellationToken.None, sync: true).WaitAndUnwrapException();
 
         /// <summary>
         /// Asynchronously clears all buffers for this stream, causes any buffered data to
@@ -235,7 +183,7 @@ namespace Manandre.IO
         /// The default value is System.Threading.CancellationToken.None.</param>
         /// <returns>A task that represents the asynchronous flush operation.</returns>
         public override Task FlushAsync(CancellationToken cancellationToken)
-        => DoFlushAsync(cancellationToken, sync: false);
+        => this.DoFlushAsync(cancellationToken, sync: false);
 
         /// <summary>
         /// Clears all buffers for this stream and causes
@@ -245,7 +193,7 @@ namespace Manandre.IO
         /// The stream is closed or an internal error has occurred.
         /// </exception>
         public override void Flush()
-        => DoFlushAsync(CancellationToken.None, sync: true).WaitAndUnwrapException();
+        => this.DoFlushAsync(CancellationToken.None, sync: true).WaitAndUnwrapException();
 
 #if !NETSTANDARD1_3
 
@@ -279,11 +227,10 @@ namespace Manandre.IO
         /// An asynchronous read was attempted past the end of the file.
         /// </exception>
         public sealed override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-        =>  ApmAsyncFactory.ToBegin(
-                ReadAsync(buffer, offset, count, CancellationToken.None),
+        => ApmAsyncFactory.ToBegin(
+                this.ReadAsync(buffer, offset, count, CancellationToken.None),
                 callback,
-                state
-            );
+                state);
 
         /// <summary>
         /// Begins an asynchronous write operation. (Consider using AsyncStream.WriteAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)
@@ -315,11 +262,10 @@ namespace Manandre.IO
         /// An asynchronous write was attempted past the end of the file.
         /// </exception>
         public sealed override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-        =>  ApmAsyncFactory.ToBegin(
-                WriteAsync(buffer, offset, count, CancellationToken.None),
+        => ApmAsyncFactory.ToBegin(
+                this.WriteAsync(buffer, offset, count, CancellationToken.None),
                 callback,
-                state
-            );
+                state);
 
         /// <summary>
         /// Waits for the pending asynchronous read operation to complete. (Consider using
@@ -346,7 +292,7 @@ namespace Manandre.IO
         /// The stream is closed or an internal error has occurred.
         /// </exception>
         public sealed override int EndRead(IAsyncResult asyncResult)
-        =>  ApmAsyncFactory.ToEnd<int>(asyncResult);
+        => ApmAsyncFactory.ToEnd<int>(asyncResult);
 
         /// <summary>
         /// Waits for the pending asynchronous write operation to complete. (Consider using
@@ -373,88 +319,144 @@ namespace Manandre.IO
 
 #if NETSTANDARD2_1
         /// <summary>
+        /// Asynchronously releases all resources used by the AsyncStream.
+        /// </summary>
+        /// <returns>A ValueTask representing the dispose operation.</returns>
+        public sealed override ValueTask DisposeAsync() => this.DisposeAsync(true);
+
+        /// <summary>
         /// Asynchronously releases the unmanaged resources used by the FollowingFileStream and optionally
         /// releases the managed resources.
         /// </summary>
-        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
-        ///</param>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        /// <returns>A ValueTask representing the dispose operation.</returns>
         protected virtual ValueTask DisposeAsync(bool disposing) => default;
 
         /// <summary>
-        /// Asynchronously releases all resources used by the AsyncStream.
+        /// Releases the unmanaged resources used by the FollowingFileStream and optionally
+        /// releases the managed resources.
         /// </summary>
-        public sealed override ValueTask DisposeAsync() => DisposeAsync(true);
-        
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        protected sealed override void Dispose(bool disposing) => this.DisposeAsync(disposing).GetAwaiter().GetResult();
+#else
         /// <summary>
         /// Releases the unmanaged resources used by the FollowingFileStream and optionally
         /// releases the managed resources.
         /// </summary>
-        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
-        ///</param>
-        protected sealed override void Dispose(bool disposing) => DisposeAsync(disposing).GetAwaiter().GetResult();
-#else        
-        /// <summary>
-        /// Releases the unmanaged resources used by the FollowingFileStream and optionally
-        /// releases the managed resources.
-        /// </summary>
-        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
-        ///</param>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
             // Call stream class implementation.
             base.Dispose(disposing);
         }
 #endif
-        /// <summary>
-        /// Synchronized version of an async stream
-        /// </summary>
-        /// <param name="stream">Stream to synchronize</param>
-        /// <returns></returns>
-        public static AsyncStream Synchronized(AsyncStream stream)
-        {
-            if (stream == null)
-            {
-                throw new ArgumentNullException(nameof(stream));
-            }
-            if (stream is AsyncSafeStream)
-            {
-                return stream;
-            }
 
-            return new AsyncSafeStream(stream);
-        }
+        /// <summary>
+        /// Asynchronously reads a sequence of bytes from the current stream, advances the
+        /// position within the stream by the number of bytes read, and monitors cancellation
+        /// requests.
+        /// </summary>
+        /// <param name="buffer">The buffer to write the data into.</param>
+        /// <param name="offset">The byte offset in buffer at which to begin writing data from the stream.</param>
+        /// <param name="count">The maximum number of bytes to read.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <param name="sync">If enabled, returns an already-completed task.</param>
+        /// <returns>
+        /// A task that represents the asynchronous read operation. The value of the TResult
+        /// parameter contains the total number of bytes read into the buffer. The result
+        /// value can be less than the number of bytes requested if the number of bytes currently
+        /// available is less than the requested number, or it can be 0 (zero) if the end
+        /// of the stream has been reached.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// buffer is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// offset and count describe an invalid range in array.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// FollowingFileStream.CanRead for this stream is false.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// The stream is currently in use by a previous read operation.
+        /// </exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// offset or count is negative.
+        /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        /// Methods were called after the stream was closed.
+        /// </exception>
+        protected abstract Task<int> DoReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync = false);
+
+        /// <summary>
+        /// Asynchronously writes a sequence of bytes to the current stream, advances the
+        /// current position within this stream by the number of bytes written, and monitors
+        /// cancellation requests.
+        /// </summary>
+        /// <param name="buffer">An array of bytes. This method copies count bytes from buffer to the current stream.</param>
+        /// <param name="offset">The zero-based byte offset in buffer at which to begin copying bytes to the current stream.</param>
+        /// <param name="count">The number of bytes to be written to the current stream.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.
+        /// The default value is System.Threading.CancellationToken.None.</param>
+        /// <param name="sync">If enabled, returns an already-completed task.</param>
+        /// <returns>A task that represents the asynchronous write operation.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// buffer is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// offset and count describe an invalid range in array.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// AsyncStream.CanWrite for this stream is false.
+        /// </exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// offset or count is negative.
+        /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        /// Methods were called after the stream was closed.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// The stream is currently in use by a previous write operation.
+        /// </exception>
+        protected abstract Task DoWriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync = false);
+
+        /// <summary>
+        /// Asynchronously clears all buffers for this stream, causes any buffered data to
+        /// be written to the underlying device, and monitors cancellation requests.
+        /// </summary>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.
+        /// The default value is System.Threading.CancellationToken.None.</param>
+        /// <param name="sync">If enabled, returns an already-completed task.</param>
+        /// <returns>A task that represents the asynchronous flush operation.</returns>
+        protected abstract Task DoFlushAsync(CancellationToken cancellationToken, bool sync = false);
 
         private sealed class AsyncSafeStream : AsyncStream
         {
-            private readonly AsyncStream _stream;
+            private readonly AsyncStream asyncStream;
             private readonly CancellationTokenSource cts = new CancellationTokenSource();
             private readonly AsyncLock locker = new AsyncLock();
+            private bool disposed = false;
 
             public AsyncSafeStream(AsyncStream stream)
             {
-                if (stream == null)
-                {
-                    throw new ArgumentNullException(nameof(stream));
-                }
-
-                _stream = stream;
+                this.asyncStream = stream ?? throw new ArgumentNullException(nameof(stream));
             }
 
-            public override bool CanRead => _stream.CanRead;
+            public override bool CanRead => this.asyncStream.CanRead;
 
-            public override bool CanWrite => _stream.CanWrite;
+            public override bool CanWrite => this.asyncStream.CanWrite;
 
-            public override bool CanSeek => _stream.CanSeek;
+            public override bool CanSeek => this.asyncStream.CanSeek;
 
-            public override bool CanTimeout => _stream.CanTimeout;
+            public override bool CanTimeout => this.asyncStream.CanTimeout;
 
             public override long Length
             {
                 get
                 {
-                    using (locker.Lock(cts.Token))
+                    using (this.locker.Lock(this.cts.Token))
                     {
-                        return _stream.Length;
+                        return this.asyncStream.Length;
                     }
                 }
             }
@@ -463,16 +465,17 @@ namespace Manandre.IO
             {
                 get
                 {
-                    using (locker.Lock(cts.Token))
+                    using (this.locker.Lock(this.cts.Token))
                     {
-                        return _stream.Position;
+                        return this.asyncStream.Position;
                     }
                 }
+
                 set
                 {
-                    using (locker.Lock(cts.Token))
+                    using (this.locker.Lock(this.cts.Token))
                     {
-                        _stream.Position = value;
+                        this.asyncStream.Position = value;
                     }
                 }
             }
@@ -481,11 +484,12 @@ namespace Manandre.IO
             {
                 get
                 {
-                    return _stream.ReadTimeout;
+                    return this.asyncStream.ReadTimeout;
                 }
+
                 set
                 {
-                    _stream.ReadTimeout = value;
+                    this.asyncStream.ReadTimeout = value;
                 }
             }
 
@@ -493,52 +497,60 @@ namespace Manandre.IO
             {
                 get
                 {
-                    return _stream.WriteTimeout;
+                    return this.asyncStream.WriteTimeout;
                 }
+
                 set
                 {
-                    _stream.WriteTimeout = value;
+                    this.asyncStream.WriteTimeout = value;
                 }
             }
 
             public override long Seek(long offset, SeekOrigin origin)
             {
-                using (locker.Lock(cts.Token))
-                    return _stream.Seek(offset, origin);
+                using (this.locker.Lock(this.cts.Token))
+                {
+                    return this.asyncStream.Seek(offset, origin);
+                }
             }
 
             public override void SetLength(long value)
             {
-                using (locker.Lock(cts.Token))
-                    _stream.SetLength(value);
+                using (this.locker.Lock(this.cts.Token))
+                {
+                    this.asyncStream.SetLength(value);
+                }
             }
 
             protected override async Task<int> DoReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync)
             {
                 var read = 0;
-                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
-                try
+                using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this.cts.Token))
                 {
-                    using (sync ? locker.Lock(linkedCts.Token) : await locker.LockAsync(linkedCts.Token).ConfigureAwait(false))
+                    try
                     {
-                        read = await _stream.DoReadAsync(buffer, offset, count, linkedCts.Token, sync);
+                        using (sync ? this.locker.Lock(linkedCts.Token) : await this.locker.LockAsync(linkedCts.Token).ConfigureAwait(false))
+                        {
+                            read = await this.asyncStream.DoReadAsync(buffer, offset, count, linkedCts.Token, sync).ConfigureAwait(false);
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
                     }
                 }
-                catch (OperationCanceledException)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
+
                 return read;
             }
 
             protected override async Task DoWriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync)
             {
-                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this.cts.Token);
                 try
                 {
-                    using (sync ? locker.Lock(linkedCts.Token) : await locker.LockAsync(linkedCts.Token).ConfigureAwait(false))
+                    using (sync ? this.locker.Lock(linkedCts.Token) : await this.locker.LockAsync(linkedCts.Token).ConfigureAwait(false))
                     {
-                        await _stream.DoWriteAsync(buffer, offset, count, linkedCts.Token, sync);
+                        await this.asyncStream.DoWriteAsync(buffer, offset, count, linkedCts.Token, sync).ConfigureAwait(false);
                     }
                 }
                 catch (OperationCanceledException)
@@ -549,12 +561,12 @@ namespace Manandre.IO
 
             protected override async Task DoFlushAsync(CancellationToken cancellationToken, bool sync)
             {
-                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this.cts.Token);
                 try
                 {
-                    using (sync ? locker.Lock(linkedCts.Token) : await locker.LockAsync(linkedCts.Token).ConfigureAwait(false))
+                    using (sync ? this.locker.Lock(linkedCts.Token) : await this.locker.LockAsync(linkedCts.Token).ConfigureAwait(false))
                     {
-                        await _stream.DoFlushAsync(linkedCts.Token, sync);
+                        await this.asyncStream.DoFlushAsync(linkedCts.Token, sync).ConfigureAwait(false);
                     }
                 }
                 catch (OperationCanceledException)
@@ -563,76 +575,64 @@ namespace Manandre.IO
                 }
             }
 
-            private bool disposed = false;
-
 #if NETSTANDARD2_1
             protected override async ValueTask DisposeAsync(bool disposing)
             {
-                if (disposed)
+                if (this.disposed)
+                {
                     return;
-                
+                }
+
                 try
                 {
                     // Explicitly pick up a potentially methodimpl'ed DisposeAsync
                     if (disposing)
                     {
-                        cts.Cancel();
-                        using (await locker.LockAsync())
+                        this.cts.Cancel();
+                        using (await this.locker.LockAsync())
                         {
-                            await ((IAsyncDisposable)_stream).DisposeAsync();
+                            await ((IAsyncDisposable)this.asyncStream).DisposeAsync();
                         }
+
+                        this.cts.Dispose();
                     }
                 }
                 finally
                 {
-                    disposed = true;
+                    this.disposed = true;
                     await base.DisposeAsync(disposing);
                 }
             }
 #else
             protected override void Dispose(bool disposing)
             {
-                if (disposed)
+                if (this.disposed)
+                {
                     return;
-                
+                }
+
                 try
                 {
                     // Explicitly pick up a potentially methodimpl'ed Dispose
                     if (disposing)
                     {
-                        cts.Cancel();
-                        using (locker.Lock())
+                        this.cts.Cancel();
+                        using (this.locker.Lock())
                         {
-                            ((IDisposable)_stream).Dispose();
+                            ((IDisposable)this.asyncStream).Dispose();
                         }
 
+                        this.cts.Dispose();
                     }
                 }
                 finally
                 {
-                    disposed = true;
+                    this.disposed = true;
                     base.Dispose(disposing);
                 }
             }
 #endif
         }
     }
-
-    #pragma warning restore S3881
-
-    /// <summary>
-    /// AsyncStream class extensions
-    /// </summary>
-    public static class AsyncStreamExtensions
-    {
-        /// <summary>
-        /// Synchronized version of an async stream
-        /// </summary>
-        /// <param name="stream">Stream to synchronize</param>
-        /// <returns></returns>
-        public static AsyncStream Synchronized(this AsyncStream stream)
-        {
-            return AsyncStream.Synchronized(stream);
-        }
-    }
+#pragma warning restore S3881
 }

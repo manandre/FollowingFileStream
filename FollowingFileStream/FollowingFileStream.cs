@@ -1,11 +1,18 @@
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
+// --------------------------------------------------------------------------------------------------
+// <copyright file="FollowingFileStream.cs" company="Manandre">
+// Copyright (c) Manandre. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------
 
 namespace Manandre.IO
 {
+    using System;
+    using System.IO;
+    using System.Runtime.InteropServices;
+    using System.Threading;
+    using System.Threading.Tasks;
+
     /// <summary>
     /// Provides a System.IO.Stream for following a file being written,
     /// supporting both synchronous and asynchronous read operations.
@@ -13,22 +20,32 @@ namespace Manandre.IO
     public class FollowingFileStream : AsyncStream
     {
         /// <summary>
-        /// The underlying filestream
-        /// </summary>
-        private readonly FileStream fileStream;
-        /// <summary>
-        /// Time before retrying write access to followed file
+        /// Time before retrying write access to followed file.
         /// </summary>
         private const int MillisecondsRetryTimeout = 100;
 
         /// <summary>
-        /// CancellationTokenSource
+        /// The underlying filestream.
+        /// </summary>
+        private readonly FileStream fileStream;
+
+        /// <summary>
+        /// CancellationTokenSource.
         /// </summary>
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
-        #region Constructors
         /// <summary>
-        /// Initializes a new instance of the FollowingFileStream class with the specified path.
+        /// Total time.
+        /// </summary>
+        private long totalTime;
+
+        /// <summary>
+        /// Disposed.
+        /// </summary>
+        private bool disposed = false;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FollowingFileStream"/> class with the specified path.
         /// </summary>
         /// <param name="path">A relative or absolute path for the file
         /// that the current FollowingFileStream object will encapsulate.</param>
@@ -64,12 +81,12 @@ namespace Manandre.IO
         public FollowingFileStream(string path)
         {
 #pragma warning disable S2930
-            fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            this.fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 #pragma warning restore S2930
         }
 
         /// <summary>
-        /// Initializes a new instance of the FollowingFileStream class with the specified
+        /// Initializes a new instance of the <see cref="FollowingFileStream"/> class with the specified
         /// path, buffer size, and synchronous
         /// or asynchronous state.
         /// </summary>
@@ -123,16 +140,15 @@ namespace Manandre.IO
         public FollowingFileStream(string path, int bufferSize, bool useAsync)
         {
 #pragma warning disable S2930
-            fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, bufferSize, useAsync);
+            this.fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, bufferSize, useAsync);
 #pragma warning restore S2930
         }
-        #endregion
 
         /// <summary>
         /// Gets the name of the FollowingFileStream that was passed to the constructor.
         /// </summary>
         /// <value>A string that is the name of the FollowingFileStream.</value>
-        public virtual string Name => fileStream.Name;
+        public virtual string Name => this.fileStream.Name;
 
         /// <summary>
         /// Gets a value indicating whether the FollowingFileStream was opened asynchronously or synchronously.
@@ -140,7 +156,7 @@ namespace Manandre.IO
         /// <returns>
         /// true if the FollowongFileStream was opened asynchronously; otherwise, false.
         /// </returns>
-        public virtual bool IsAsync => fileStream.IsAsync;
+        public virtual bool IsAsync => this.fileStream.IsAsync;
 
         /// <summary>
         /// Gets a value indicating whether the current stream supports writing.
@@ -156,7 +172,7 @@ namespace Manandre.IO
         /// <returns>
         /// true if the stream supports reading; false if the stream is closed.
         /// </returns>
-        public override bool CanRead => fileStream.CanRead;
+        public override bool CanRead => this.fileStream.CanRead;
 
         /// <summary>
         /// Gets a value indicating whether the current stream supports seeking.
@@ -164,7 +180,7 @@ namespace Manandre.IO
         /// <returns>
         /// true if the stream supports seeking; false if the stream is closed.
         /// </returns>
-        public override bool CanSeek => fileStream.CanSeek;
+        public override bool CanSeek => this.fileStream.CanSeek;
 
         /// <summary>
         /// Gets the length in bytes of the stream.
@@ -178,7 +194,7 @@ namespace Manandre.IO
         /// <exception cref="System.IO.IOException">
         /// An I/O error, such as the file being closed, occurred.
         /// </exception>
-        public override long Length => fileStream.Length;
+        public override long Length => this.fileStream.Length;
 
         /// <summary>
         /// Gets or sets the current position of this stream.
@@ -196,9 +212,53 @@ namespace Manandre.IO
         /// <exception cref="System.IO.EndOfStreamException">
         /// Attempted seeking past the end of a stream that does not support this.
         /// </exception>
-        public override long Position { get => fileStream.Position; set => fileStream.Position = value; }
+        public override long Position { get => this.fileStream.Position; set => this.fileStream.Position = value; }
 
         /// <summary>
+        /// Gets a value indicating whether the stream supports timeouts.
+        /// </summary>
+        public override bool CanTimeout => true;
+
+        /// <summary>
+        /// Gets or sets the read timeout.
+        /// </summary>
+        public override int ReadTimeout { get; set; } = Timeout.Infinite;
+
+        /// <summary>
+        /// Sets the current position of this stream to the given value.
+        /// </summary>
+        /// <param name="offset">The point relative to origin from which to begin seeking.</param>
+        /// <param name="origin">Specifies the beginning, the end, or the current position as a reference point
+        /// for offset, using a value of type System.IO.SeekOrigin.</param>
+        /// <returns>The new position in the stream.</returns>
+        /// <exception cref="System.NotSupportedException">
+        /// FollowingFileStream.CanSeek for this stream is false.
+        /// </exception>
+        /// <exception cref="System.IO.IOException">
+        /// An I/O error, such as the file being closed, occurred.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Seeking is attempted before the beginning of the stream.
+        /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        /// Methods were called after the stream was closed.
+        /// </exception>
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            return this.fileStream.Seek(offset, origin);
+        }
+
+        /// <summary>
+        /// Sets the length of this stream to the given value.
+        /// </summary>
+        /// <param name="value">the length value to set.</param>
+        /// <exception cref="System.NotSupportedException">Not supported.</exception>
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+                /// <summary>
         /// Asynchronously reads a sequence of bytes from the current stream, advances the
         /// position within the stream by the number of bytes read, and monitors cancellation
         /// requests.
@@ -207,7 +267,7 @@ namespace Manandre.IO
         /// <param name="offset">The byte offset in buffer at which to begin writing data from the stream.</param>
         /// <param name="count">The maximum number of bytes to read.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
-        /// <param name="sync">If enabled, returns an already-completed task</param>
+        /// <param name="sync">If enabled, returns an already-completed task.</param>
         /// <returns>
         /// A task that represents the asynchronous read operation. The value of the TResult
         /// parameter contains the total number of bytes read into the buffer. The result
@@ -235,24 +295,110 @@ namespace Manandre.IO
         /// </exception>
         protected override async Task<int> DoReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync)
         {
-            int read = 0;
+            int read;
             do
             {
-                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+                read = await this.fileStream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
-            while (read == 0 && await RetryNeededAsync().ConfigureAwait(false));
+            while (read == 0 && await this.RetryNeededAsync().ConfigureAwait(false));
 
             // In case the filestream has been written and closed between the last read operation
             // and the IsFileLockedForWriting() check
             if (read == 0)
             {
-                read = await fileStream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+                read = await this.fileStream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
 
-            TotalTime = 0;
+            this.totalTime = 0;
 
             return read;
         }
+
+        /// <summary>
+        /// Asynchronously writes a block of bytes to the file stream.
+        /// </summary>
+        /// <param name="buffer">The buffer to read the data from.</param>
+        /// <param name="offset">The byte offset in buffer at which to begin reading data from the buffer.</param>
+        /// <param name="count">The maximum number of bytes to write.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <param name="sync">If enabled, returns an already-completed task.</param>
+        /// <returns>A task representing the write operation.</returns>
+        /// <exception cref="System.NotSupportedException">Not supported.</exception>
+        protected override Task DoWriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <summary>
+        /// Clears buffers for this stream and causes any buffered data to be written to the file.
+        /// </summary>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <param name="sync">If enabled, returns an already-completed task.</param>
+        /// <returns>A task representing the flush operation.</returns>
+        /// <exception cref="System.NotSupportedException">Not supported.</exception>
+        protected override Task DoFlushAsync(CancellationToken cancellationToken, bool sync)
+        {
+            throw new NotSupportedException();
+        }
+
+        #if NETSTANDARD2_1
+        /// <summary>
+        /// Releases the unmanaged resources used by the FollowingFileStream and optionally
+        /// releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        /// <returns>A ValueTask representing the dispose operation.</returns>
+        protected override async ValueTask DisposeAsync(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            try
+            {
+                if (disposing)
+                {
+                    this.cts.Cancel();
+                    await this.fileStream.DisposeAsync();
+                    this.cts.Dispose();
+                }
+            }
+            finally
+            {
+                this.disposed = true;
+
+                // Call AsyncStream class implementation.
+                await base.DisposeAsync(disposing);
+            }
+        }
+#else
+        /// <summary>
+        /// Releases the unmanaged resources used by the FollowingFileStream and optionally
+        /// releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
+        /// </param>
+        protected override void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.cts.Cancel();
+                this.fileStream.Dispose();
+                this.cts.Dispose();
+            }
+
+            this.disposed = true;
+
+            // Call AsyncStream class implementation.
+            base.Dispose(disposing);
+        }
+#endif
 
         /// <summary>
         /// Asynchronously checks wheter the file is locked for writing
@@ -266,42 +412,33 @@ namespace Manandre.IO
         private async Task<bool> RetryNeededAsync()
         {
             bool retry = true;
+
             // File locking for read/write operations is only supported on Windows
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                retry = IsFileLockedForWriting();
+                retry = this.IsFileLockedForWriting();
             }
+
             if (retry)
             {
                 try
                 {
                     var duration = MillisecondsRetryTimeout;
-                    await Task.Delay(duration, cts.Token).ConfigureAwait(false);
-                    TotalTime += duration;
-                    retry = ReadTimeout == Timeout.Infinite || TotalTime < ReadTimeout;
+                    await Task.Delay(duration, this.cts.Token).ConfigureAwait(false);
+                    this.totalTime += duration;
+                    retry = this.ReadTimeout == Timeout.Infinite || this.totalTime < this.ReadTimeout;
                 }
                 catch (TaskCanceledException)
                 {
                     retry = false;
                 }
             }
+
             return retry;
         }
 
-        private long TotalTime;
-
         /// <summary>
-        /// 
-        /// </summary>
-        public override bool CanTimeout => true;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public override int ReadTimeout { get; set; } = Timeout.Infinite;
-
-        /// <summary>
-        /// Synchronously checks whether the file is locked for writing
+        /// Synchronously checks whether the file is locked for writing.
         /// </summary>
         /// <returns> true if the file is locked for writing; false, otherwise.</returns>
         private bool IsFileLockedForWriting()
@@ -310,14 +447,14 @@ namespace Manandre.IO
 
             try
             {
-                stream = new FileStream(fileStream.Name, FileMode.Open, FileAccess.Write, FileShare.Read);
+                stream = new FileStream(this.fileStream.Name, FileMode.Open, FileAccess.Write, FileShare.Read);
             }
             catch (IOException)
             {
-                //the file is unavailable because it is:
-                //still being written to
-                //or being processed by another thread
-                //or does not exist (has already been processed)
+                // the file is unavailable because it is:
+                // still being written to
+                // or being processed by another thread
+                // or does not exist (has already been processed)
                 return true;
             }
             finally
@@ -325,111 +462,8 @@ namespace Manandre.IO
                 stream?.Dispose();
             }
 
-            //file is not locked
+            // file is not locked
             return false;
-        }
-
-        private bool disposed = false;
-
-#if NETSTANDARD2_1
-        /// <summary>
-        /// Releases the unmanaged resources used by the FollowingFileStream and optionally
-        /// releases the managed resources.
-        /// </summary>
-        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
-        ///</param>
-        protected override async ValueTask DisposeAsync(bool disposing)
-        {
-            if (disposed)
-                return;
-
-            try
-            {
-                if (disposing)
-                {
-                    cts.Cancel();
-                    await fileStream.DisposeAsync();
-                }
-            }
-            finally
-            {
-                disposed = true;
-                // Call stream class implementation.
-                base.Dispose(disposing);
-            }
-        }
-#else
-        /// <summary>
-        /// Releases the unmanaged resources used by the FollowingFileStream and optionally
-        /// releases the managed resources.
-        /// </summary>
-        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.
-        ///</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposed)
-                return;
-
-            if (disposing)
-            {
-                cts.Cancel();
-                fileStream.Dispose();
-            }
-
-            disposed = true;
-            // Call stream class implementation.
-            base.Dispose(disposing);
-        }
-#endif
-        /// <summary>
-        /// Clears buffers for this stream and causes any buffered data to be written to the file.
-        /// </summary>
-        /// <exception cref="System.NotSupportedException">Not supported</exception>
-        protected override Task DoFlushAsync(CancellationToken cancellationToken, bool sync)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Sets the current position of this stream to the given value.
-        /// </summary>
-        /// <param name="offset">The point relative to origin from which to begin seeking.</param>
-        /// <param name="origin">Specifies the beginning, the end, or the current position as a reference point
-        /// for offset, using a value of type System.IO.SeekOrigin.</param>
-        /// <returns>The new position in the stream.</returns>
-        /// <exception cref="System.NotSupportedException">
-        /// FollowingFileStream.CanSeek for this stream is false.
-        /// </exception>
-        /// <exception cref="System.IO.IOException">
-        /// An I/O error, such as the file being closed, occurred.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Seeking is attempted before the beginning of the stream.
-        /// </exception>
-        /// <exception cref="System.ObjectDisposedException">
-        /// Methods were called after the stream was closed.
-        /// </exception>
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            return fileStream.Seek(offset, origin);
-        }
-
-        /// <summary>
-        /// Sets the length of this stream to the given value.
-        /// </summary>
-        /// <exception cref="System.NotSupportedException">Not supported</exception>
-        public override void SetLength(long value)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Asynchronously writes a block of bytes to the file stream.
-        /// </summary>
-        /// <exception cref="System.NotSupportedException">Not supported</exception>
-        protected override Task DoWriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, bool sync)
-        {
-            throw new NotSupportedException();
         }
     }
 }

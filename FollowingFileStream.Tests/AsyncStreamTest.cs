@@ -1,25 +1,38 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
-using Moq.Protected;
-using System;
-using System.IO;
-using System.Linq.Expressions;
-using System.Threading;
-using System.Threading.Tasks;
+// --------------------------------------------------------------------------------------------------
+// <copyright file="AsyncStreamTest.cs" company="Manandre">
+// Copyright (c) Manandre. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------
 
 namespace Manandre.IO
 {
+    using System;
+    using System.IO;
+    using System.Linq.Expressions;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Moq;
+    using Moq.Protected;
+
+    /// <summary>
+    /// Test class for AsyncStream.
+    /// </summary>
     [TestClass]
     public class AsyncStreamTest
     {
+        /// <summary>
+        /// Test AsyncStream read operations.
+        /// </summary>
         [TestMethod]
-        public void AS_Read()
+        public void ASRead()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             var expected = 42;
             sut.Protected().Setup<Task<int>>("DoReadAsync", ItExpr.IsAny<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), ItExpr.IsAny<bool>())
             .ReturnsAsync(expected);
-            var read = sut.Object.Read(null, 0 , 0);
+            var read = sut.Object.Read(null, 0, 0);
             sut.Protected().Verify("DoReadAsync", Times.Once(), ItExpr.IsAny<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), true);
             Assert.AreEqual(expected, read);
 
@@ -30,11 +43,14 @@ namespace Manandre.IO
 #endif
         }
 
+        /// <summary>
+        /// Test AsyncStream write operations.
+        /// </summary>
         [TestMethod]
-        public void AS_Write()
+        public void ASWrite()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
-            sut.Object.Write(null, 0 , 0);
+            sut.Object.Write(null, 0, 0);
             sut.Protected().Verify("DoWriteAsync", Times.Once(), ItExpr.IsAny<byte[]>(), ItExpr.IsAny<int>(), ItExpr.IsAny<int>(), ItExpr.IsAny<CancellationToken>(), true);
 
 #if !NETSTANDARD1_3
@@ -43,24 +59,33 @@ namespace Manandre.IO
 #endif
         }
 
+        /// <summary>
+        /// Test AsyncStream flush operations.
+        /// </summary>
         [TestMethod]
-        public void AS_Flush()
+        public void ASFlush()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             sut.Object.Flush();
             sut.Protected().Verify<Task>("DoFlushAsync", Times.Once(), ItExpr.IsAny<CancellationToken>(), true);
         }
 
+        /// <summary>
+        /// Test AsyncStream dispose operations.
+        /// </summary>
         [TestMethod]
-        public void AS_Dispose()
+        public void ASDispose()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             sut.Object.Dispose();
             sut.Object.Dispose();
         }
 
+        /// <summary>
+        /// Test AsyncStream synchronized operations.
+        /// </summary>
         [TestMethod]
-        public void AS_Synchronized()
+        public void ASSynchronized()
         {
             Assert.ThrowsException<ArgumentNullException>(() => AsyncStream.Synchronized(null));
             var sut = new Mock<AsyncStream>() { CallBase = true };
@@ -74,7 +99,7 @@ namespace Manandre.IO
                 x => x.CanRead,
                 x => x.CanWrite,
                 x => x.CanSeek,
-                x => x.CanTimeout
+                x => x.CanTimeout,
             };
             foreach (var func in funcs)
             {
