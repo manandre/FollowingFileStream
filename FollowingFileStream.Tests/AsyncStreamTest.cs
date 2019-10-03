@@ -1,17 +1,30 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
-using System;
-using System.IO;
-using System.Linq.Expressions;
-using System.Threading;
+// --------------------------------------------------------------------------------------------------
+// <copyright file="AsyncStreamTest.cs" company="Manandre">
+// Copyright (c) Manandre. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------
 
 namespace Manandre.IO
 {
+    using System;
+    using System.IO;
+    using System.Linq.Expressions;
+    using System.Threading;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Moq;
+
+    /// <summary>
+    /// Test class for AsyncStream.
+    /// </summary>
     [TestClass]
     public class AsyncStreamTest
     {
+        /// <summary>
+        /// Test AsyncStream read operations.
+        /// </summary>
         [TestMethod]
-        public void AS_Read()
+        public void ASRead()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             var expected = 42;
@@ -24,8 +37,11 @@ namespace Manandre.IO
             Assert.AreEqual(expected, read);
         }
 
+        /// <summary>
+        /// Test AsyncStream write operations.
+        /// </summary>
         [TestMethod]
-        public void AS_Write()
+        public void ASWrite()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             sut.Setup(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
@@ -37,8 +53,11 @@ namespace Manandre.IO
             sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
+        /// <summary>
+        /// Test AsyncStream flush operations.
+        /// </summary>
         [TestMethod]
-        public void AS_Flush()
+        public void ASFlush()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             sut.Setup(x => x.FlushAsync(It.IsAny<CancellationToken>())).Verifiable();
@@ -46,16 +65,22 @@ namespace Manandre.IO
             sut.Verify(x => x.FlushAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
+        /// <summary>
+        /// Test AsyncStream dispose operations.
+        /// </summary>
         [TestMethod]
-        public void AS_Dispose()
+        public void ASDispose()
         {
             var sut = new Mock<AsyncStream>() { CallBase = true };
             sut.Object.Dispose();
             sut.Object.Dispose();
         }
 
+        /// <summary>
+        /// Test AsyncStream synchronized operations.
+        /// </summary>
         [TestMethod]
-        public void AS_Synchronized()
+        public void ASSynchronized()
         {
             Assert.ThrowsException<ArgumentNullException>(() => AsyncStream.Synchronized(null));
             var sut = new Mock<AsyncStream>() { CallBase = true };
@@ -69,7 +94,7 @@ namespace Manandre.IO
                 x => x.CanRead,
                 x => x.CanWrite,
                 x => x.CanSeek,
-                x => x.CanTimeout
+                x => x.CanTimeout,
             };
             foreach (var func in funcs)
             {
