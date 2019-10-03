@@ -18,8 +18,8 @@ namespace Manandre.IO
     [TestClass]
     public class FollowingFileStreamTest
     {
-        private string inputFilePath = Path.GetTempFileName();
-        private string outputFilePath = Path.GetTempFileName();
+        private readonly string inputFilePath = Path.GetTempFileName();
+        private readonly string outputFilePath = Path.GetTempFileName();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FollowingFileStreamTest"/> class.
