@@ -24,18 +24,6 @@ jobs:
       vmImage: $(imageName)
 
     steps:
-    - task: GitVersion@5
-      inputs:
-        runtime: 'core'
-    - task: SonarCloudPrepare@1
-      inputs:
-        SonarCloud: 'SonarCloud'
-        organization: 'manandre'
-        scannerMode: 'MSBuild'
-        projectKey: 'manandre_FollowingFileStream'
-        projectVersion: '$(Build.BuildId)'
-        extraProperties: 'sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/coverage/coverage.opencover.xml'
-
     - task: UseDotNet@2
       displayName: 'Use dotnet sdk 2.x'
       inputs:
@@ -45,6 +33,19 @@ jobs:
       displayName: 'Use dotnet sdk 3.x'
       inputs:
         version: 3.x
+
+    - task: GitVersion@5
+      inputs:
+        runtime: 'core'
+
+    - task: SonarCloudPrepare@1
+      inputs:
+        SonarCloud: 'SonarCloud'
+        organization: 'manandre'
+        scannerMode: 'MSBuild'
+        projectKey: 'manandre_FollowingFileStream'
+        projectVersion: '$(Build.BuildId)'
+        extraProperties: 'sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/coverage/coverage.netcoreapp3.0.opencover.xml'
 
     - task: DotNetCoreCLI@2
       displayName: Restore
@@ -79,13 +80,13 @@ jobs:
 
     - script: |
         dotnet tool install dotnet-reportgenerator-globaltool --tool-path . 
-        ./reportgenerator "-reports:$(Build.SourcesDirectory)/coverage/coverage.opencover.xml" "-targetdir:coverage/Cobertura" "-reporttypes:Cobertura;HTMLInline;HTMLChart"
+        ./reportgenerator "-reports:$(Build.SourcesDirectory)/coverage/coverage.netcoreapp3.0.opencover.xml" "-targetdir:coverage/Cobertura" "-reporttypes:Cobertura;HTMLInline;HTMLChart"
       condition: eq( variables['Agent.OS'], 'Linux' )
       displayName: Run Reportgenerator on Linux
     
     - script: |
         dotnet tool install dotnet-reportgenerator-globaltool --tool-path .
-        .\reportgenerator.exe "-reports:$(Build.SourcesDirectory)/coverage/coverage.opencover.xml" "-targetdir:coverage/Cobertura" "-reporttypes:Cobertura;HTMLInline;HTMLChart"
+        .\reportgenerator.exe "-reports:$(Build.SourcesDirectory)/coverage/coverage.netcoreapp3.0.opencover.xml" "-targetdir:coverage/Cobertura" "-reporttypes:Cobertura;HTMLInline;HTMLChart"
       condition: eq( variables['Agent.OS'], 'Windows_NT' )
       displayName: Run Reportgenerator on Windows
 

@@ -12,7 +12,9 @@ namespace Manandre.IO
     using System.Threading;
     using System.Threading.Tasks;
     using Nito.AsyncEx;
+#if !NETSTANDARD1_3
     using Nito.AsyncEx.Interop;
+#endif
     using Nito.AsyncEx.Synchronous;
 
     /// <summary>
@@ -327,7 +329,11 @@ namespace Manandre.IO
         /// Asynchronously releases all resources used by the AsyncStream.
         /// </summary>
         /// <returns>A ValueTask representing the dispose operation.</returns>
-        public sealed override ValueTask DisposeAsync() => this.DisposeAsync(true);
+        public sealed override async ValueTask DisposeAsync()
+        {
+            await this.DisposeAsync(true).ConfigureAwait(false);
+            await base.DisposeAsync().ConfigureAwait(false);
+        }
 
         /// <summary>
         /// Asynchronously releases the unmanaged resources used by the FollowingFileStream and optionally
@@ -342,7 +348,11 @@ namespace Manandre.IO
         /// releases the managed resources.
         /// </summary>
         /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
-        protected sealed override void Dispose(bool disposing) => this.DisposeAsync(disposing).GetAwaiter().GetResult();
+        protected sealed override void Dispose(bool disposing)
+        {
+            this.DisposeAsync(disposing).AsTask().GetAwaiter().GetResult();
+            base.Dispose(disposing);
+        }
 #else
         /// <summary>
         /// Releases the unmanaged resources used by the FollowingFileStream and optionally
@@ -517,7 +527,7 @@ namespace Manandre.IO
                         this.cts.Cancel();
                         using (await this.locker.LockAsync())
                         {
-                            await ((IAsyncDisposable)this.asyncStream).DisposeAsync();
+                            await ((IAsyncDisposable)this.asyncStream).DisposeAsync().ConfigureAwait(false);
                         }
 
                         this.cts.Dispose();
@@ -526,7 +536,7 @@ namespace Manandre.IO
                 finally
                 {
                     this.disposed = true;
-                    await base.DisposeAsync(disposing);
+                    await base.DisposeAsync(disposing).ConfigureAwait(false);
                 }
             }
 #else

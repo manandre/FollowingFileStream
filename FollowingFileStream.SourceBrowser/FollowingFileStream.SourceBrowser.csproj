@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="SourceBrowser" Version="1.0.24" PrivateAssets="All" />
+    <PackageReference Include="SourceBrowser" Version="1.0.28" PrivateAssets="All" />
   </ItemGroup>
   <Target Name="GenerateSourceBrowserWebsite" AfterTargets="PostBuildEvent" Condition=" '$(OS)' == 'Windows_NT' ">
     <Exec Command="$(PkgSourceBrowser)\tools\HtmlGenerator.exe $(MSBuildProjectDirectory)\..\All.sln /out:$(ProjectDir)bin\Index /force" />
