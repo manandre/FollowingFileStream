@@ -30,10 +30,10 @@ namespace Manandre.IO
             var expected = 42;
             sut.Setup(x => x.ReadAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
-            var read = sut.Object.Read(null, 0, 0);
+            var read = sut.Object.Read(null!, 0, 0);
             Assert.AreEqual(expected, read);
 
-            read = sut.Object.EndRead(sut.Object.BeginRead(null, 0, 0, null, null));
+            read = sut.Object.EndRead(sut.Object.BeginRead(null!, 0, 0, null!, null!));
             Assert.AreEqual(expected, read);
         }
 
@@ -46,10 +46,10 @@ namespace Manandre.IO
             var sut = new Mock<AsyncStream>() { CallBase = true };
             sut.Setup(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Verifiable();
-            sut.Object.Write(null, 0, 0);
+            sut.Object.Write(null!, 0, 0);
             sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
 
-            sut.Object.EndWrite(sut.Object.BeginWrite(null, 0, 0, null, null));
+            sut.Object.EndWrite(sut.Object.BeginWrite(null!, 0, 0, null!, null!));
             sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
@@ -82,7 +82,7 @@ namespace Manandre.IO
         [TestMethod]
         public void ASSynchronized()
         {
-            Assert.ThrowsException<ArgumentNullException>(() => AsyncStream.Synchronized(null));
+            Assert.ThrowsException<ArgumentNullException>(() => AsyncStream.Synchronized(null!));
             var sut = new Mock<AsyncStream>() { CallBase = true };
             var synchronized = AsyncStream.Synchronized(sut.Object);
             Assert.IsNotNull(synchronized);
@@ -156,23 +156,23 @@ namespace Manandre.IO
             // Read
             sut.Setup(x => x.ReadAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected2);
-            var read = synchronized.ReadAsync(null, 0, 0).Result;
+            var read = synchronized.ReadAsync(null!, 0, 0).Result;
             Assert.AreEqual(expected2, read);
-            read = synchronized.Read(null, 0, 0);
+            read = synchronized.Read(null!, 0, 0);
             Assert.AreEqual(expected2, read);
-            read = synchronized.EndRead(synchronized.BeginRead(null, 0, 0, null, null));
+            read = synchronized.EndRead(synchronized.BeginRead(null!, 0, 0, null!, null!));
             Assert.AreEqual(expected2, read);
 
             // Write
             sut.Setup(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Verifiable();
-            synchronized.WriteAsync(null, 0, 0).Wait();
+            synchronized.WriteAsync(null!, 0, 0).Wait();
             sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
-            synchronized.Write(null, 0, 0);
+            synchronized.Write(null!, 0, 0);
             sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-            synchronized.EndWrite(synchronized.BeginWrite(null, 0, 0, null, null));
+            synchronized.EndWrite(synchronized.BeginWrite(null!, 0, 0, null!, null!));
             sut.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
-            Assert.ThrowsExceptionAsync<OperationCanceledException>(() => synchronized.WriteAsync(null, 0, 0, new CancellationToken(true)));
+            Assert.ThrowsExceptionAsync<OperationCanceledException>(() => synchronized.WriteAsync(null!, 0, 0, new CancellationToken(true)));
 
             // Async
             sut.Setup(x => x.FlushAsync(It.IsAny<CancellationToken>())).Verifiable();

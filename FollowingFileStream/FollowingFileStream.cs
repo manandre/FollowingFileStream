@@ -440,11 +440,12 @@ namespace Manandre.IO
         /// <returns> true if the file is locked for writing; false, otherwise.</returns>
         private bool IsFileLockedForWriting()
         {
-            FileStream stream = null;
-
             try
             {
-                stream = new FileStream(this.fileStream.Name, FileMode.Open, FileAccess.Write, FileShare.Read);
+                using (new FileStream(this.fileStream.Name, FileMode.Open, FileAccess.Write, FileShare.Read))
+                {
+                    // Nothing to do
+                }
             }
             catch (IOException)
             {
@@ -453,10 +454,6 @@ namespace Manandre.IO
                 // or being processed by another thread
                 // or does not exist (has already been processed)
                 return true;
-            }
-            finally
-            {
-                stream?.Dispose();
             }
 
             // file is not locked

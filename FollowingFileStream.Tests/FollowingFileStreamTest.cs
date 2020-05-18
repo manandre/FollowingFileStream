@@ -37,7 +37,7 @@ namespace Manandre.IO
         public void FFSNullPath()
         {
             Assert.ThrowsException<ArgumentNullException>(
-                () => new FollowingFileStream(null),
+                () => new FollowingFileStream(null!),
                 "exception expected on null path");
         }
 
@@ -109,10 +109,10 @@ namespace Manandre.IO
         public void FFSModification()
         {
             using var ffs = new FollowingFileStream(this.inputFilePath);
-            Assert.ThrowsException<NotSupportedException>(() => ffs.Write(null, 0, 0));
-            Assert.ThrowsException<NotSupportedException>(() => ffs.WriteAsync(null, 0, 0));
+            Assert.ThrowsException<NotSupportedException>(() => ffs.Write(null!, 0, 0));
+            Assert.ThrowsException<NotSupportedException>(() => ffs.WriteAsync(null!, 0, 0));
             Assert.ThrowsException<NotSupportedException>(() => ffs.WriteByte(0x0));
-            Assert.ThrowsException<NotSupportedException>(() => ffs.BeginWrite(null, 0, 0, null, null));
+            Assert.ThrowsException<NotSupportedException>(() => ffs.BeginWrite(null!, 0, 0, null!, null!));
 
             Assert.ThrowsException<NotSupportedException>(() => ffs.SetLength(0));
             Assert.ThrowsException<NotSupportedException>(() => ffs.Flush());
@@ -142,7 +142,7 @@ namespace Manandre.IO
             Assert.AreEqual(expected, System.Text.Encoding.Default.GetString(bytes));
 
             ffs.Position = 0;
-            Assert.AreEqual(expected.Length, ffs.EndRead(ffs.BeginRead(bytes, 0, bytes.Length, null, null)));
+            Assert.AreEqual(expected.Length, ffs.EndRead(ffs.BeginRead(bytes, 0, bytes.Length, null!, null!)));
             Assert.AreEqual(expected, System.Text.Encoding.Default.GetString(bytes));
 
             var cts = new CancellationTokenSource();

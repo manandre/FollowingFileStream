@@ -24,7 +24,7 @@ namespace Manandre.IO
         /// <returns>A task representing the copy operation.</returns>
         public static async Task CopyToAsync(this TextReader reader, TextWriter writer, string stopOn)
         {
-            string line;
+            string? line;
             while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != stopOn)
             {
                 await writer.WriteLineAsync(line).ConfigureAwait(false);
