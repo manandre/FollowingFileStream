@@ -12,7 +12,9 @@ namespace Manandre.IO
     using System.Threading;
     using System.Threading.Tasks;
     using Nito.AsyncEx;
+#if !NETSTANDARD1_3
     using Nito.AsyncEx.Interop;
+#endif
     using Nito.AsyncEx.Synchronous;
 
     /// <summary>
