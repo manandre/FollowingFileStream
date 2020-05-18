@@ -517,7 +517,7 @@ namespace Manandre.IO
                         this.cts.Cancel();
                         using (await this.locker.LockAsync())
                         {
-                            await ((IAsyncDisposable)this.asyncStream).DisposeAsync();
+                            await ((IAsyncDisposable)this.asyncStream).DisposeAsync().ConfigureAwait(false);
                         }
 
                         this.cts.Dispose();
@@ -526,7 +526,7 @@ namespace Manandre.IO
                 finally
                 {
                     this.disposed = true;
-                    await base.DisposeAsync(disposing);
+                    await base.DisposeAsync(disposing).ConfigureAwait(false);
                 }
             }
 #else

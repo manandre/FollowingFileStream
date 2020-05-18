@@ -357,7 +357,7 @@ namespace Manandre.IO
                 if (disposing)
                 {
                     this.cts.Cancel();
-                    await this.fileStream.DisposeAsync();
+                    await this.fileStream.DisposeAsync().ConfigureAwait(false);
                     this.cts.Dispose();
                 }
             }
@@ -366,7 +366,7 @@ namespace Manandre.IO
                 this.disposed = true;
 
                 // Call AsyncStream class implementation.
-                await base.DisposeAsync(disposing);
+                await base.DisposeAsync(disposing).ConfigureAwait(false);
             }
         }
 #else

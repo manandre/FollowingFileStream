@@ -167,7 +167,7 @@ namespace Manandre.IO
                 ffs.CopyTo(destination.BaseStream);
             }
 
-            Assert.IsTrue(this.FileCompare(this.inputFilePath, this.outputFilePath));
+            Assert.IsTrue(FileCompare(this.inputFilePath, this.outputFilePath));
         }
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace Manandre.IO
                 Assert.IsTrue(copy.Wait(3 * ffs.ReadTimeout));
             }
 
-            Assert.IsTrue(this.FileCompare(this.inputFilePath, this.outputFilePath));
+            Assert.IsTrue(FileCompare(this.inputFilePath, this.outputFilePath));
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace Manandre.IO
             Assert.IsTrue(copy.IsCompletedSuccessfully);
         }
 
-        private bool FileCompare(string file1, string file2)
+        private static bool FileCompare(string file1, string file2)
         {
             // Determine if the same file was referenced two times.
             if (file1 == file2)
