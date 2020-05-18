@@ -73,7 +73,7 @@ namespace Manandre.IO
         /// <exception cref="System.IO.IOException">
         /// An asynchronous read was attempted past the end of the file.
         /// </exception>
-        public sealed override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        public sealed override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)
         {
             return ApmAsyncFactory.ToBegin(
                 this.ReadAsync(buffer, offset, count, CancellationToken.None),
@@ -110,7 +110,7 @@ namespace Manandre.IO
         /// <exception cref="System.IO.IOException">
         /// An asynchronous write was attempted past the end of the file.
         /// </exception>
-        public sealed override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        public sealed override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)
         {
             return ApmAsyncFactory.ToBegin(
                 this.WriteAsync(buffer, offset, count, CancellationToken.None),
